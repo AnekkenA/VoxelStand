@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "H": {
+      "item": "minecraft:hay_block"
+    },
+    "W": [
+      {
+        "item": "minecraft:oak_planks"
+      },
+      {
+        "item": "minecraft:oak_log"
+      }
+    ],
+    "C": {
+      "item": "minecraft:copper_block"
+    }
+  },
+  "pattern": [
+    "SLS",
+    "SHS",
+    "WCW"
+  ],
+  "result": {
+    "id": "voxelstand:sculpt_stand",
+    "count": 1
+  }
+}

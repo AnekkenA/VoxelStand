@@ -1,0 +1,13 @@
+﻿{
+  "itemGroup.voxelstand": "Custom Smith (Кузница кастомизации)",
+  "block.voxelstand.plate_crafter": "Верстак нарезки пластин",
+  "block.voxelstand.sculpt_stand": "Кузнечный стапель (Стойка кастомизации)",
+  "item.voxelstand.chisel": "Кузнечное долото (Резец)",
+  "item.voxelstand.plate": "Пластина: %s (%dx%d)",
+  "tooltip.voxelstand.chisel": "ЛКМ: выбить 1x1x1 микроблок\nShift + ПКМ: переключить режим симметрии",
+  "tooltip.voxelstand.plate": "Материал: %s\nРазмер: %dx%d\nПКМ по стойке: установить пластину",
+  "message.voxelstand.voxel_limit_exceeded": "Превышен лимит вокселей! (%d / %d)",
+  "message.voxelstand.symmetry_enabled": "Режим зеркальной симметрии: Включен",
+  "message.voxelstand.symmetry_disabled": "Режим зеркальной симметрии: Выключен",
+  "message.voxelstand.not_enough_plates": "Нужно минимум 2 пластины для симметричной установки!"
+}

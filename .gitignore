@@ -1,0 +1,25 @@
+﻿# Gradle files
+.gradle/
+build/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# Minecraft / NeoForge runtime files
+run/
+crash-reports/
+logs/
+usernamecache.json
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp

@@ -1,0 +1,13 @@
+﻿{
+  "itemGroup.voxelstand": "Custom Smith",
+  "block.voxelstand.plate_crafter": "Plate Crafter",
+  "block.voxelstand.sculpt_stand": "Universal Sculpting Stand",
+  "item.voxelstand.chisel": "Sculpting Chisel",
+  "item.voxelstand.plate": "%s Plate (%dx%d)",
+  "tooltip.voxelstand.chisel": "Left click: Chip away 1x1x1 microblock\nShift + Right click: Toggle symmetry",
+  "tooltip.voxelstand.plate": "Material: %s\nSize: %dx%d\nRight click on stand to place",
+  "message.voxelstand.voxel_limit_exceeded": "Voxel limit exceeded! (%d / %d)",
+  "message.voxelstand.symmetry_enabled": "Symmetry Mode: Enabled",
+  "message.voxelstand.symmetry_disabled": "Symmetry Mode: Disabled",
+  "message.voxelstand.not_enough_plates": "Need 2 plates for symmetrical placement!"
+}

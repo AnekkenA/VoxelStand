@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": {
+      "item": "minecraft:grindstone"
+    },
+    "C": {
+      "item": "minecraft:crafting_table"
+    }
+  },
+  "pattern": [
+    "G",
+    "C"
+  ],
+  "result": {
+    "id": "voxelstand:plate_crafter",
+    "count": 1
+  }
+}

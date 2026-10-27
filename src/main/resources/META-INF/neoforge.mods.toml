@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="MIT"
+
+[[mods]]
+modId="voxelstand"
+version="${mod_version}"
+displayName="Voxel Stand"
+authors="lma"
+description='''
+Voxel Stand: Voxel-based armor and weapon forging and customization mod for Minecraft 1.21.1 NeoForge.
+Features 32x32x32 voxel micro-block forging, plate cutting for modded ingots/gems with dynamic texture color sampling, spyglass inspection quality tiers (Normal, Sturdy +15%, Pure +30%), and 3D hologram blueprints.
+Compatible with ~800 modpacks using #c convention tags.
+'''
+
+[[dependencies.voxelstand]]
+    modId="neoforge"
+    type="required"
+    versionRange="${neo_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.voxelstand]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"

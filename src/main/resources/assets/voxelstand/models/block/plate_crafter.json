@@ -1,0 +1,1258 @@
+﻿{
+    "elements":  [
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                24
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                24
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             8
+                                                         ],
+                                                  "texture":  "#stone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               8
+                                                           ],
+                                                    "texture":  "#stone"
+                                                }
+                                   },
+                         "from":  [
+                                      1,
+                                      0,
+                                      1
+                                  ],
+                         "to":  [
+                                    5,
+                                    12,
+                                    5
+                                ],
+                         "name":  "stone_leg_nw"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                24
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                24
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             8
+                                                         ],
+                                                  "texture":  "#stone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               8
+                                                           ],
+                                                    "texture":  "#stone"
+                                                }
+                                   },
+                         "from":  [
+                                      27,
+                                      0,
+                                      1
+                                  ],
+                         "to":  [
+                                    31,
+                                    12,
+                                    5
+                                ],
+                         "name":  "stone_leg_ne"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                24
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                24
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             8
+                                                         ],
+                                                  "texture":  "#stone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               8
+                                                           ],
+                                                    "texture":  "#stone"
+                                                }
+                                   },
+                         "from":  [
+                                      1,
+                                      0,
+                                      11
+                                  ],
+                         "to":  [
+                                    5,
+                                    12,
+                                    15
+                                ],
+                         "name":  "stone_leg_sw"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                24
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                24
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             8
+                                                         ],
+                                                  "texture":  "#stone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               8
+                                                           ],
+                                                    "texture":  "#stone"
+                                                }
+                                   },
+                         "from":  [
+                                      27,
+                                      0,
+                                      11
+                                  ],
+                         "to":  [
+                                    31,
+                                    12,
+                                    15
+                                ],
+                         "name":  "stone_leg_se"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                56,
+                                                                3
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               24,
+                                                               3
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                56,
+                                                                3
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             56,
+                                                             24
+                                                         ],
+                                                  "texture":  "#stone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               24,
+                                                               3
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               56,
+                                                               24
+                                                           ],
+                                                    "texture":  "#stone"
+                                                }
+                                   },
+                         "from":  [
+                                      2,
+                                      3,
+                                      2
+                                  ],
+                         "to":  [
+                                    30,
+                                    4.5,
+                                    14
+                                ],
+                         "name":  "bottom_shelf"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                16,
+                                                                6
+                                                            ],
+                                                     "texture":  "#plates"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               6
+                                                           ],
+                                                    "texture":  "#plates"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                16,
+                                                                6
+                                                            ],
+                                                     "texture":  "#plates"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             16,
+                                                             16
+                                                         ],
+                                                  "texture":  "#plates"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               6
+                                                           ],
+                                                    "texture":  "#plates"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               16
+                                                           ],
+                                                    "texture":  "#plates"
+                                                }
+                                   },
+                         "from":  [
+                                      5,
+                                      4.5,
+                                      4
+                                  ],
+                         "to":  [
+                                    13,
+                                    7.5,
+                                    12
+                                ],
+                         "name":  "shelf_plates_1"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                16,
+                                                                8
+                                                            ],
+                                                     "texture":  "#plates"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               8
+                                                           ],
+                                                    "texture":  "#plates"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                16,
+                                                                8
+                                                            ],
+                                                     "texture":  "#plates"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             16,
+                                                             16
+                                                         ],
+                                                  "texture":  "#plates"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               8
+                                                           ],
+                                                    "texture":  "#plates"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               16
+                                                           ],
+                                                    "texture":  "#plates"
+                                                }
+                                   },
+                         "from":  [
+                                      16,
+                                      4.5,
+                                      4
+                                  ],
+                         "to":  [
+                                    24,
+                                    8.5,
+                                    12
+                                ],
+                         "name":  "shelf_plates_2"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                64,
+                                                                6
+                                                            ],
+                                                     "texture":  "#top"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               32,
+                                                               6
+                                                           ],
+                                                    "texture":  "#top"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                64,
+                                                                6
+                                                            ],
+                                                     "texture":  "#top"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             64,
+                                                             32
+                                                         ],
+                                                  "texture":  "#top"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               32,
+                                                               6
+                                                           ],
+                                                    "texture":  "#top"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               64,
+                                                               32
+                                                           ],
+                                                    "texture":  "#top"
+                                                }
+                                   },
+                         "from":  [
+                                      0,
+                                      12,
+                                      0
+                                  ],
+                         "to":  [
+                                    32,
+                                    15,
+                                    16
+                                ],
+                         "name":  "tabletop"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                3,
+                                                                12
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               10,
+                                                               12
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                3,
+                                                                12
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             3,
+                                                             10
+                                                         ],
+                                                  "texture":  "#stone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               10,
+                                                               12
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               3,
+                                                               10
+                                                           ],
+                                                    "texture":  "#stone"
+                                                }
+                                   },
+                         "from":  [
+                                      5,
+                                      15,
+                                      5.5
+                                  ],
+                         "to":  [
+                                    6.5,
+                                    21,
+                                    10.5
+                                ],
+                         "name":  "grind_mount_left"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                3,
+                                                                12
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               10,
+                                                               12
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                3,
+                                                                12
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             3,
+                                                             10
+                                                         ],
+                                                  "texture":  "#stone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               10,
+                                                               12
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               3,
+                                                               10
+                                                           ],
+                                                    "texture":  "#stone"
+                                                }
+                                   },
+                         "from":  [
+                                      11.5,
+                                      15,
+                                      5.5
+                                  ],
+                         "to":  [
+                                    13,
+                                    21,
+                                    10.5
+                                ],
+                         "name":  "grind_mount_right"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                18,
+                                                                3
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               4,
+                                                               3
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                18,
+                                                                3
+                                                            ],
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             18,
+                                                             4
+                                                         ],
+                                                  "texture":  "#stone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               4,
+                                                               3
+                                                           ],
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               18,
+                                                               4
+                                                           ],
+                                                    "texture":  "#stone"
+                                                }
+                                   },
+                         "from":  [
+                                      4.5,
+                                      18,
+                                      7
+                                  ],
+                         "to":  [
+                                    13.5,
+                                    19.5,
+                                    9
+                                ],
+                         "name":  "grind_axle"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                16
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               16
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                16
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             16
+                                                         ],
+                                                  "texture":  "#grindstone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               16
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               16
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                }
+                                   },
+                         "from":  [
+                                      7,
+                                      16,
+                                      4
+                                  ],
+                         "to":  [
+                                    11,
+                                    24,
+                                    12
+                                ],
+                         "name":  "wheel_center"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                8
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               4,
+                                                               8
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                8
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             4
+                                                         ],
+                                                  "texture":  "#grindstone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               4,
+                                                               8
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               4
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                }
+                                   },
+                         "from":  [
+                                      7,
+                                      18,
+                                      2
+                                  ],
+                         "to":  [
+                                    11,
+                                    22,
+                                    4
+                                ],
+                         "name":  "wheel_step_front"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                8
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               4,
+                                                               8
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                8
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             4
+                                                         ],
+                                                  "texture":  "#grindstone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               4,
+                                                               8
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               4
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                }
+                                   },
+                         "from":  [
+                                      7,
+                                      18,
+                                      12
+                                  ],
+                         "to":  [
+                                    11,
+                                    22,
+                                    14
+                                ],
+                         "name":  "wheel_step_back"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                4
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               4
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                4
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             8
+                                                         ],
+                                                  "texture":  "#grindstone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               4
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               8
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                }
+                                   },
+                         "from":  [
+                                      7,
+                                      24,
+                                      6
+                                  ],
+                         "to":  [
+                                    11,
+                                    26,
+                                    10
+                                ],
+                         "name":  "wheel_step_top"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                3
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               3
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                8,
+                                                                3
+                                                            ],
+                                                     "texture":  "#grindstone"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             8,
+                                                             8
+                                                         ],
+                                                  "texture":  "#grindstone"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               3
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               8,
+                                                               8
+                                                           ],
+                                                    "texture":  "#grindstone"
+                                                }
+                                   },
+                         "from":  [
+                                      7,
+                                      14.5,
+                                      6
+                                  ],
+                         "to":  [
+                                    11,
+                                    16,
+                                    10
+                                ],
+                         "name":  "wheel_step_bottom"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                16,
+                                                                4
+                                                            ],
+                                                     "texture":  "#plates"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               4
+                                                           ],
+                                                    "texture":  "#plates"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                16,
+                                                                4
+                                                            ],
+                                                     "texture":  "#plates"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             16,
+                                                             16
+                                                         ],
+                                                  "texture":  "#plates"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               4
+                                                           ],
+                                                    "texture":  "#plates"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               16,
+                                                               16
+                                                           ],
+                                                    "texture":  "#plates"
+                                                }
+                                   },
+                         "from":  [
+                                      18,
+                                      15,
+                                      3
+                                  ],
+                         "to":  [
+                                    26,
+                                    17,
+                                    11
+                                ],
+                         "name":  "top_plates_stack1"
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                14,
+                                                                3
+                                                            ],
+                                                     "texture":  "#plates"
+                                                 },
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               14,
+                                                               3
+                                                           ],
+                                                    "texture":  "#plates"
+                                                },
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                14,
+                                                                3
+                                                            ],
+                                                     "texture":  "#plates"
+                                                 },
+                                       "up":  {
+                                                  "uv":  [
+                                                             0,
+                                                             0,
+                                                             14,
+                                                             14
+                                                         ],
+                                                  "texture":  "#plates"
+                                              },
+                                       "east":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               14,
+                                                               3
+                                                           ],
+                                                    "texture":  "#plates"
+                                                },
+                                       "down":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               14,
+                                                               14
+                                                           ],
+                                                    "texture":  "#plates"
+                                                }
+                                   },
+                         "from":  [
+                                      20,
+                                      17,
+                                      4
+                                  ],
+                         "to":  [
+                                    27,
+                                    18.5,
+                                    11
+                                ],
+                         "name":  "top_plates_stack2"
+                     }
+                 ],
+    "texture_size":  [
+                         64,
+                         64
+                     ],
+    "credit":  "voxelstand Mod - Plate Crafter (2x1x1)",
+    "textures":  {
+                     "stone":  "voxelstand:block/plate_crafter_stone",
+                     "top":  "voxelstand:block/plate_crafter_top",
+                     "grindstone":  "voxelstand:block/plate_crafter_grindstone",
+                     "particle":  "voxelstand:block/plate_crafter_top",
+                     "plates":  "voxelstand:block/plate_crafter_plates"
+                 }
+}

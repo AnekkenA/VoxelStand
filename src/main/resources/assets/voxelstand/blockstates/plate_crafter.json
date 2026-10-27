@@ -1,0 +1,7 @@
+﻿{
+  "variants": {
+    "": {
+      "model": "voxelstand:block/plate_crafter"
+    }
+  }
+}
