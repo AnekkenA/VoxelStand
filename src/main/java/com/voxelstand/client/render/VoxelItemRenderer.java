@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 /**
@@ -26,7 +27,10 @@ public class VoxelItemRenderer extends BlockEntityWithoutLevelRenderer {
     public void renderByItem(ItemStack stack, ItemDisplayContext context, PoseStack poseStack,
                              MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         if (!CustomItemRenderer.renderCustomItem(stack, context, poseStack, bufferSource, packedLight, packedOverlay)) {
-            super.renderByItem(stack, context, poseStack, bufferSource, packedLight, packedOverlay);
+            try {
+                IClientItemExtensions.DEFAULT.getCustomRenderer().renderByItem(stack, context, poseStack, bufferSource, packedLight, packedOverlay);
+            } catch (Throwable ignored) {
+            }
         }
     }
 }

@@ -52,8 +52,8 @@ public class SculptStandHudOverlay implements LayeredDraw.Layer {
         int screenHeight = graphics.guiHeight();
 
         // Позиционирование карточки в правом верхнем углу
-        int cardWidth = 205;
-        int lineCount = 8;
+        int cardWidth = 215;
+        int lineCount = (stand.getMode() == SculptStandBlockEntity.StandMode.WEAPON) ? 9 : 8;
         int cardHeight = 26 + (lineCount * 11);
         int cardX = screenWidth - cardWidth - 12;
         int cardY = 12;
@@ -77,7 +77,13 @@ public class SculptStandHudOverlay implements LayeredDraw.Layer {
         } else {
             graphics.drawString(font, "§6[Режим: Ковка] §7(Перерасчет статов)", textX, textY, 0xFFA500, true);
         }
-        textY += 12;
+        textY += 11;
+
+        if (stand.getMode() == SculptStandBlockEntity.StandMode.WEAPON) {
+            String gripName = stand.getCurrentPose() != null ? stand.getCurrentPose().getPresetName() : "Классический";
+            graphics.drawString(font, "§7Хват: §e" + gripName, textX, textY, 0xFFFFAA, true);
+            textY += 11;
+        }
 
         // 2. Лимит вокселей и шкала прогресса
         int maxVox = VoxelConstants.DEFAULT_VOXEL_LIMIT;
@@ -143,6 +149,6 @@ public class SculptStandHudOverlay implements LayeredDraw.Layer {
         }
 
         textY += 13;
-        graphics.drawString(font, "§8[ПКМ рукой: Режим | Shift: Снять]", textX, textY, 0x888888, false);
+        graphics.drawString(font, "§8[ЛКМ: Хват | ПКМ: Режим | Shift: Снять]", textX, textY, 0x888888, false);
     }
 }

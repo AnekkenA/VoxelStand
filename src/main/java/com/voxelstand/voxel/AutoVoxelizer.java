@@ -25,7 +25,7 @@ public class AutoVoxelizer {
         if (name.contains("gold")) return VoxelMaterial.GOLD;
         if (name.contains("iron")) return VoxelMaterial.IRON;
         if (name.contains("copper")) return VoxelMaterial.COPPER;
-        if (name.contains("stone") || name.contains("chainmail")) return VoxelMaterial.DEEPSLATE;
+        if (name.contains("stone") || name.contains("chainmail")) return VoxelMaterial.STONE;
         if (name.contains("leather")) return VoxelMaterial.LEATHER;
         return VoxelMaterial.IRON;
     }

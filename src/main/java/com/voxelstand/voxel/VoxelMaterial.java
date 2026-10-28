@@ -14,8 +14,8 @@ public enum VoxelMaterial {
     QUARTZ((byte) 1, "quartz", 0xFFFFFF, false, "minecraft:quartz"),
     BONE((byte) 2, "bone", 0xE3DAC9, false, "minecraft:bone_block"),
     IRON((byte) 3, "iron", 0xD8D8D8, false, "minecraft:iron_ingot"),
-    DEEPSLATE((byte) 4, "deepslate", 0x3F3F44, false, "minecraft:deepslate"),
-    NETHERITE((byte) 5, "netherite", 0x31292A, false, "minecraft:netherite_scrap"),
+    DEEPSLATE((byte) 4, "stone", 0x8A8A8E, false, "minecraft:stone"),
+    NETHERITE((byte) 5, "netherite", 0x483F40, false, "minecraft:netherite_scrap"),
     COPPER((byte) 6, "copper", 0xC06B4F, false, "minecraft:copper_ingot"),
     OBSIDIAN((byte) 7, "obsidian", 0x181223, false, "minecraft:obsidian"), // alt: crying_obsidian
 
@@ -58,6 +58,8 @@ public enum VoxelMaterial {
     private final int rgb;
     private final boolean emissive;
     private final String primaryIngredient;
+
+    public static final VoxelMaterial STONE = DEEPSLATE;
 
     private static final Map<Byte, VoxelMaterial> BY_ID = new HashMap<>();
 

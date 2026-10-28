@@ -29,7 +29,77 @@ public class ItemPoseData {
     // Двуручный хват
     public boolean twoHanded = false;
 
+    // Пресет хвата (0 = Одноручный, 1 = Двуручный, 2 = Обратный, 3 = Наизготовку, 4 = На плече)
+    public int gripPreset = 0;
+
     public ItemPoseData() {}
+
+    public void cyclePreset() {
+        gripPreset = (gripPreset + 1) % 5;
+        applyPreset(gripPreset);
+    }
+
+    public void applyPreset(int preset) {
+        this.gripPreset = Math.max(0, preset % 5);
+        switch (this.gripPreset) {
+            case 0 -> { // Классический одноручный
+                this.armPitch = 0.0f;
+                this.armYaw = 0.0f;
+                this.armRoll = 0.0f;
+                this.itemRotX = 0.0f;
+                this.itemRotY = 0.0f;
+                this.itemRotZ = 0.0f;
+                this.twoHanded = false;
+            }
+            case 1 -> { // Двуручный боевой хват
+                this.armPitch = -25.0f;
+                this.armYaw = -10.0f;
+                this.armRoll = 0.0f;
+                this.itemRotX = 0.0f;
+                this.itemRotY = 0.0f;
+                this.itemRotZ = 0.0f;
+                this.twoHanded = true;
+            }
+            case 2 -> { // Обратный хват (кинжал / ниндзя)
+                this.armPitch = 12.0f;
+                this.armYaw = 0.0f;
+                this.armRoll = 0.0f;
+                this.itemRotX = 0.0f;
+                this.itemRotY = 0.0f;
+                this.itemRotZ = 180.0f;
+                this.twoHanded = false;
+            }
+            case 3 -> { // Стойка наизготовку (выпад)
+                this.armPitch = -35.0f;
+                this.armYaw = 12.0f;
+                this.armRoll = 10.0f;
+                this.itemRotX = 15.0f;
+                this.itemRotY = 0.0f;
+                this.itemRotZ = 15.0f;
+                this.twoHanded = true;
+            }
+            case 4 -> { // На плече (берсерк)
+                this.armPitch = -60.0f;
+                this.armYaw = -15.0f;
+                this.armRoll = 30.0f;
+                this.itemRotX = -25.0f;
+                this.itemRotY = 35.0f;
+                this.itemRotZ = 0.0f;
+                this.twoHanded = false;
+            }
+        }
+    }
+
+    public String getPresetName() {
+        return switch (gripPreset) {
+            case 0 -> "Классический (одноручный)";
+            case 1 -> "Двуручный хват";
+            case 2 -> "Обратный хват (кинжальный)";
+            case 3 -> "Стойка наизготовку (выпад)";
+            case 4 -> "На плече (берсерк)";
+            default -> "Классический";
+        };
+    }
 
     public static ItemPoseData createDefault(float totalWeight, boolean isShield) {
         ItemPoseData pose = new ItemPoseData();
@@ -37,23 +107,18 @@ public class ItemPoseData {
             pose.armPitch = -15.0f;
             pose.itemRotY = 90.0f;
             pose.twoHanded = false;
+            pose.gripPreset = 0;
         } else if (totalWeight > 350.0f) {
-            // Тяжелый предмет (молот, алебарда): рекомендуется двуручный хват
-            pose.armPitch = -25.0f;
-            pose.armYaw = -10.0f;
-            pose.twoHanded = true;
-            pose.gripOffsetY = -4.0f;
+            pose.applyPreset(1); // Двуручный для тяжелого оружия
         } else {
-            // Обычный одноручный хват
-            pose.armPitch = 0.0f;
-            pose.armYaw = 0.0f;
-            pose.twoHanded = false;
+            pose.applyPreset(0); // Классический
         }
         return pose;
     }
 
     public CompoundTag toNbt() {
         CompoundTag tag = new CompoundTag();
+        tag.putInt("GripPreset", gripPreset);
         tag.putFloat(VoxelConstants.NBT_ARM_PITCH, armPitch);
         tag.putFloat(VoxelConstants.NBT_ARM_YAW, armYaw);
         tag.putFloat(VoxelConstants.NBT_ARM_ROLL, armRoll);
@@ -69,6 +134,7 @@ public class ItemPoseData {
 
     public void copyFrom(ItemPoseData other) {
         if (other == null) return;
+        this.gripPreset = other.gripPreset;
         this.armPitch = other.armPitch;
         this.armYaw = other.armYaw;
         this.armRoll = other.armRoll;
@@ -85,6 +151,7 @@ public class ItemPoseData {
         ItemPoseData pose = new ItemPoseData();
         if (tag == null) return pose;
 
+        pose.gripPreset = tag.contains("GripPreset") ? tag.getInt("GripPreset") : 0;
         pose.armPitch = tag.getFloat(VoxelConstants.NBT_ARM_PITCH);
         pose.armYaw = tag.getFloat(VoxelConstants.NBT_ARM_YAW);
         pose.armRoll = tag.getFloat(VoxelConstants.NBT_ARM_ROLL);

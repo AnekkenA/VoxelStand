@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.item.*;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -76,7 +76,10 @@ public class ClientSetup {
         };
 
         for (Item item : BuiltInRegistries.ITEM) {
-            event.registerItem(voxelExtension, item);
+            if (item instanceof TieredItem || item instanceof ArmorItem ||
+                item instanceof ShieldItem || item instanceof BowItem || item instanceof CrossbowItem) {
+                event.registerItem(voxelExtension, item);
+            }
         }
     }
 

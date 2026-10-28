@@ -64,6 +64,14 @@ public class CustomItemRenderer {
         poseStack.pushPose();
 
         boolean isArmor = customData.contains(VoxelConstants.NBT_VOXEL_MODEL);
+        boolean isGui = (context == ItemDisplayContext.GUI);
+        boolean isHand = (context == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND || context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND ||
+                          context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND);
+
+        // Точка хвата: для оружия в руках — рукоять (5, 5, 16); в GUI и на земле — центр (16, 16, 16)
+        float pivotX = (!isArmor && isHand) ? 5.0f : 16.0f;
+        float pivotY = (!isArmor && isHand) ? 5.0f : 16.0f;
+        float pivotZ = 16.0f;
 
         // 1. Позиционирование и поворот в зависимости от контекста отображения
         if (context == ItemDisplayContext.GUI) {
@@ -73,12 +81,12 @@ public class CustomItemRenderer {
                 poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
                 poseStack.scale(0.7f, 0.7f, 0.7f);
             } else {
-                // Оружие и инструменты в слоте инвентаря: абсолютно аутентичное плоское 2D отображение
+                // Оружие и инструменты в слоте инвентаря: абсолютно аутентичное яркое 2D отображение
                 poseStack.scale(0.95f, 0.95f, 0.95f);
             }
         } else if (context == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND || context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND) {
-            // От первого лица: стандартный боевой наклон оружия вперед
-            poseStack.translate(0.5, 0.2, 0.5);
+            // От первого лица: хват за рукоять, клинок направлен вперед
+            poseStack.translate(0.55, 0.22, 0.55);
             if (!isArmor) {
                 poseStack.mulPose(Axis.YP.rotationDegrees(-90.0f));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(25.0f));
@@ -87,15 +95,15 @@ public class CustomItemRenderer {
             }
             poseStack.scale(0.85f, 0.85f, 0.85f);
         } else if (context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
-            // В руке от третьего лица: хват меча / инструмента
-            poseStack.translate(0.5, 0.25, 0.5);
+            // В руке от третьего лица: хват за рукоять, боевой угол 55 градусов
+            poseStack.translate(0.50, 0.25, 0.50);
             if (!isArmor) {
                 poseStack.mulPose(Axis.YP.rotationDegrees(-90.0f));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(55.0f));
             } else {
                 poseStack.mulPose(Axis.XP.rotationDegrees(-15.0f));
             }
-            poseStack.scale(0.8f, 0.8f, 0.8f);
+            poseStack.scale(0.85f, 0.85f, 0.85f);
         } else if (context == ItemDisplayContext.GROUND) {
             // На земле (выброшенный предмет лежит плоско)
             poseStack.translate(0.5, 0.05, 0.5);
@@ -109,7 +117,7 @@ public class CustomItemRenderer {
             poseStack.scale(0.8f, 0.8f, 0.8f);
         }
 
-        // Применение свободной позы удержания и вращения предмета в руке
+        // Применение позы удержания (хват, вращение, наклон)
         if (context != ItemDisplayContext.GUI && customData.contains(VoxelConstants.NBT_POSE_DATA)) {
             ItemPoseData pose = ItemPoseData.fromNbt(customData.getCompound(VoxelConstants.NBT_POSE_DATA));
             float voxScale = 1.0f / 32.0f;
@@ -123,20 +131,23 @@ public class CustomItemRenderer {
         Matrix4f mat = poseStack.last().pose();
         float scale = 1.0f / 32.0f;
 
+        // Расчет света: в GUI максимальная яркость, в мире — с гарантированным фоновым освещением
+        int effectiveLight = isGui ? 0xF000F0 : Math.max(packedLight, 0x00B000B0);
+
         for (VoxelQuad quad : quads) {
-            int light = quad.emissive ? 0xF000F0 : (context == ItemDisplayContext.GUI ? 0xF000F0 : packedLight);
+            int light = quad.emissive ? 0xF000F0 : effectiveLight;
 
-            float x1 = (quad.x1 - 16) * scale;
-            float y1 = (quad.y1 - 16) * scale;
-            float z1 = (quad.z1 - 16) * scale;
+            float x1 = (quad.x1 - pivotX) * scale;
+            float y1 = (quad.y1 - pivotY) * scale;
+            float z1 = (quad.z1 - pivotZ) * scale;
 
-            float x2 = (quad.x2 - 16) * scale;
-            float y2 = (quad.y2 - 16) * scale;
-            float z2 = (quad.z2 - 16) * scale;
+            float x2 = (quad.x2 - pivotX) * scale;
+            float y2 = (quad.y2 - pivotY) * scale;
+            float z2 = (quad.z2 - pivotZ) * scale;
 
             float r = quad.getRed(), g = quad.getGreen(), b = quad.getBlue();
             VoxelRenderHelper.renderFace(buffer, mat, x1, y1, z1, x2, y2, z2, quad.direction,
-                    r, g, b, 1.0f, light, packedOverlay);
+                    r, g, b, 1.0f, light, packedOverlay, isGui);
         }
 
         poseStack.popPose();

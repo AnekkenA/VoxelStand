@@ -455,11 +455,21 @@ public class SculptStandBlock extends BaseEntityBlock {
 
     @Override
     public void attack(BlockState state, Level level, BlockPos pos, Player player) {
-        // ЛКМ долотом: скалывание целевого вокселя по 3D-рейкасту
         ItemStack held = player.getMainHandItem();
-        if (held.getItem() instanceof ChiselItem) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof SculptStandBlockEntity stand && stand.getMode() != SculptStandBlockEntity.StandMode.EMPTY) {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof SculptStandBlockEntity stand && stand.getMode() != SculptStandBlockEntity.StandMode.EMPTY) {
+            // ЛКМ пустой рукой: переключение стиля хвата оружия и позы!
+            if (held.isEmpty()) {
+                if (!level.isClientSide) {
+                    stand.cycleGripStyle();
+                    player.displayClientMessage(Component.literal("§6[Хват оружия] §e" + stand.getCurrentPose().getPresetName()), true);
+                    level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.BLOCKS, 0.8f, 1.3f);
+                }
+                return;
+            }
+
+            // ЛКМ долотом: скалывание целевого вокселя по 3D-рейкасту
+            if (held.getItem() instanceof ChiselItem) {
                 if (!level.isClientSide) {
                     if (stand.isPoseCustomizationOnly()) {
                         player.displayClientMessage(Component.literal("§c[Кузница] Форма предмета запечатана! Изменение вокселей невозможно."), true);

@@ -137,6 +137,11 @@ public class SculptStandBlockEntity extends BlockEntity {
         return currentPose;
     }
 
+    public void cycleGripStyle() {
+        currentPose.cyclePreset();
+        setChanged();
+    }
+
     public void cyclePoseRotation() {
         currentPose.itemRotY = (currentPose.itemRotY + 90.0f) % 360.0f;
         setChanged();
