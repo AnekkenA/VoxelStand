@@ -11,6 +11,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
@@ -89,10 +90,10 @@ public class CustomItemRenderer {
             float z2 = (quad.z2 - 16) * scale;
 
             float r = quad.getRed(), g = quad.getGreen(), b = quad.getBlue();
-            solidBuffer.vertex(mat, x1, y2, z1).color(r, g, b, 1.0f).uv(0, 0).overlayCoords(packedOverlay).uv2(light).normal(0, 1, 0).endVertex();
-            solidBuffer.vertex(mat, x1, y2, z2).color(r, g, b, 1.0f).uv(0, 1).overlayCoords(packedOverlay).uv2(light).normal(0, 1, 0).endVertex();
-            solidBuffer.vertex(mat, x2, y2, z2).color(r, g, b, 1.0f).uv(1, 1).overlayCoords(packedOverlay).uv2(light).normal(0, 1, 0).endVertex();
-            solidBuffer.vertex(mat, x2, y2, z1).color(r, g, b, 1.0f).uv(1, 0).overlayCoords(packedOverlay).uv2(light).normal(0, 1, 0).endVertex();
+            solidBuffer.addVertex(mat, x1, y2, z1).setColor(r, g, b, 1.0f).setUv(0, 0).setOverlay(packedOverlay).setLight(light).setNormal(0, 1, 0);
+            solidBuffer.addVertex(mat, x1, y2, z2).setColor(r, g, b, 1.0f).setUv(0, 1).setOverlay(packedOverlay).setLight(light).setNormal(0, 1, 0);
+            solidBuffer.addVertex(mat, x2, y2, z2).setColor(r, g, b, 1.0f).setUv(1, 1).setOverlay(packedOverlay).setLight(light).setNormal(0, 1, 0);
+            solidBuffer.addVertex(mat, x2, y2, z1).setColor(r, g, b, 1.0f).setUv(1, 0).setOverlay(packedOverlay).setLight(light).setNormal(0, 1, 0);
         }
 
         poseStack.popPose();

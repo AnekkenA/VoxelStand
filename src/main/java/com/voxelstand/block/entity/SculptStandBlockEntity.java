@@ -6,13 +6,16 @@ import com.voxelstand.stats.ItemStatData;
 import com.voxelstand.stats.StatCalculator;
 import com.voxelstand.voxel.*;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.*;
-import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -248,9 +251,6 @@ public class SculptStandBlockEntity extends BlockEntity {
             }
         }
     }
-            }
-        }
-    }
 
     private void applyAutoVoxelization(ItemStack stack) {
         switch (mode) {
@@ -373,8 +373,14 @@ public class SculptStandBlockEntity extends BlockEntity {
         rootTag.putInt("PlatesPure", platesPure);
 
         // 3. Запись вычисленных ванильных зачарований
-        for (Map.Entry<Enchantment, Integer> entry : stats.enchantments.entrySet()) {
-            result.enchant(entry.getKey(), entry.getValue());
+        if (this.level != null) {
+            var lookup = this.level.registryAccess().lookup(Registries.ENCHANTMENT);
+            if (lookup.isPresent()) {
+                for (Map.Entry<ResourceLocation, Integer> entry : stats.enchantments.entrySet()) {
+                    var enchHolder = lookup.get().get(ResourceKey.create(Registries.ENCHANTMENT, entry.getKey()));
+                    enchHolder.ifPresent(holder -> result.enchant(holder, entry.getValue()));
+                }
+            }
         }
 
         // 4. Запись позы (умная рекомендация по умолчанию)
@@ -399,11 +405,11 @@ public class SculptStandBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         tag.putString("StandMode", mode.name());
         if (!heldItem.isEmpty()) {
-            tag.put("HeldItem", heldItem.save(new CompoundTag()));
+            tag.put("HeldItem", heldItem.save(registries));
         }
 
         CompoundTag partsTag = new CompoundTag();
@@ -436,8 +442,8 @@ public class SculptStandBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+    public void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
         if (tag.contains("StandMode")) {
             try {
                 this.mode = StandMode.valueOf(tag.getString("StandMode"));
@@ -449,7 +455,7 @@ public class SculptStandBlockEntity extends BlockEntity {
         }
 
         if (tag.contains("HeldItem")) {
-            this.heldItem = ItemStack.of(tag.getCompound("HeldItem"));
+            this.heldItem = ItemStack.parse(registries, tag.getCompound("HeldItem")).orElse(ItemStack.EMPTY);
         } else {
             this.heldItem = ItemStack.EMPTY;
         }
@@ -483,9 +489,9 @@ public class SculptStandBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
-        saveAdditional(tag);
+        saveAdditional(tag, registries);
         return tag;
     }
 

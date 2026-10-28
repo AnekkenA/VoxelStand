@@ -1,4 +1,4 @@
-﻿package com.voxelstand.api;
+package com.voxelstand.api;
 
 import net.minecraft.nbt.CompoundTag;
 
@@ -65,6 +65,20 @@ public class ItemPoseData {
         tag.putFloat(VoxelConstants.NBT_GRIP_OFFSET_Z, gripOffsetZ);
         tag.putBoolean(VoxelConstants.NBT_TWO_HANDED, twoHanded);
         return tag;
+    }
+
+    public void copyFrom(ItemPoseData other) {
+        if (other == null) return;
+        this.armPitch = other.armPitch;
+        this.armYaw = other.armYaw;
+        this.armRoll = other.armRoll;
+        this.itemRotX = other.itemRotX;
+        this.itemRotY = other.itemRotY;
+        this.itemRotZ = other.itemRotZ;
+        this.gripOffsetX = other.gripOffsetX;
+        this.gripOffsetY = other.gripOffsetY;
+        this.gripOffsetZ = other.gripOffsetZ;
+        this.twoHanded = other.twoHanded;
     }
 
     public static ItemPoseData fromNbt(CompoundTag tag) {

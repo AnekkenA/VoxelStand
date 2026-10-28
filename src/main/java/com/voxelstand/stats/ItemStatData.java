@@ -3,8 +3,6 @@ package com.voxelstand.stats;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,7 +57,7 @@ public class ItemStatData {
     public float qualityMultiplier = 1.0f;
     public String qualityName = "Обычное";
 
-    public final Map<Enchantment, Integer> enchantments = new HashMap<>();
+    public final Map<ResourceLocation, Integer> enchantments = new HashMap<>();
 
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
@@ -86,14 +84,11 @@ public class ItemStatData {
         tag.putString("QualityName", qualityName);
 
         ListTag enchList = new ListTag();
-        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+        for (Map.Entry<ResourceLocation, Integer> entry : enchantments.entrySet()) {
             CompoundTag eTag = new CompoundTag();
-            ResourceLocation id = ForgeRegistries.ENCHANTMENTS.getKey(entry.getKey());
-            if (id != null) {
-                eTag.putString("id", id.toString());
-                eTag.putShort("lvl", entry.getValue().shortValue());
-                enchList.add(eTag);
-            }
+            eTag.putString("id", entry.getKey().toString());
+            eTag.putShort("lvl", entry.getValue().shortValue());
+            enchList.add(eTag);
         }
         tag.put("CustomEnchantments", enchList);
 
@@ -138,9 +133,9 @@ public class ItemStatData {
             ListTag enchList = tag.getList("CustomEnchantments", 10);
             for (int i = 0; i < enchList.size(); i++) {
                 CompoundTag eTag = enchList.getCompound(i);
-                String idStr = eTag.getString("id");
-                // В 1.21 чары регистрируются динамически в RegistryAccess
-                // Временный сборщик уровней чар сохраняет NBT без зависимости от статического реестра
+                try {
+                    data.enchantments.put(ResourceLocation.parse(eTag.getString("id")), (int) eTag.getShort("lvl"));
+                } catch (Exception ignored) {}
             }
         }
 

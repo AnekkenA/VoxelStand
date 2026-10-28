@@ -1,4 +1,4 @@
-﻿package com.voxelstand.voxel;
+package com.voxelstand.voxel;
 
 import java.util.HashMap;
 import java.util.Map;

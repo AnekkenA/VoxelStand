@@ -1,4 +1,4 @@
-﻿package com.voxelstand.test;
+package com.voxelstand.test;
 
 import com.voxelstand.mesh.GreedyMesher;
 import com.voxelstand.mesh.VoxelQuad;

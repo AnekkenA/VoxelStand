@@ -57,39 +57,39 @@ public class DynamicAttributeHandler {
 
         CompoundTag rootTag = VoxelDataHelper.getCustomData(stack);
         ItemStatData stats = ItemStatData.fromNBT(rootTag.getCompound("CustomSmithStats"));
-        EquipmentSlot slot = event.getSlotType();
 
-        // 1. Оружие и инструменты в главной руке
-        if (slot == EquipmentSlot.MAINHAND) {
-            float damage = stats.isBroken ? 1.0f : stats.damage;
-            float speed = stats.isBroken ? 1.0f : stats.attackSpeed;
-
-            event.addModifier(Attributes.ATTACK_DAMAGE, new AttributeModifier(
-                    BASE_ATTACK_DAMAGE_ID, damage, AttributeModifier.Operation.ADD_VALUE));
-
-            event.addModifier(Attributes.ATTACK_SPEED, new AttributeModifier(
-                    BASE_ATTACK_SPEED_ID, speed - 4.0, AttributeModifier.Operation.ADD_VALUE));
-        }
-
-        // 2. Доспехи на теле
-        if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) {
+        if (stack.getItem() instanceof net.minecraft.world.item.ArmorItem armorItem) {
+            EquipmentSlot slot = armorItem.getEquipmentSlot();
+            net.minecraft.world.entity.EquipmentSlotGroup slotGroup = net.minecraft.world.entity.EquipmentSlotGroup.bySlot(slot);
             int slotIdx = Math.max(0, Math.min(3, slot.getIndex()));
             if (!stats.isBroken && stats.armor > 0) {
                 event.addModifier(Attributes.ARMOR, new AttributeModifier(
-                        ARMOR_MODIFIER_IDS[slotIdx], stats.armor, AttributeModifier.Operation.ADD_VALUE));
+                        ARMOR_MODIFIER_IDS[slotIdx], stats.armor, AttributeModifier.Operation.ADD_VALUE), slotGroup);
             }
             if (!stats.isBroken && stats.armorToughness > 0) {
                 event.addModifier(Attributes.ARMOR_TOUGHNESS, new AttributeModifier(
-                        TOUGHNESS_MODIFIER_IDS[slotIdx], stats.armorToughness, AttributeModifier.Operation.ADD_VALUE));
+                        TOUGHNESS_MODIFIER_IDS[slotIdx], stats.armorToughness, AttributeModifier.Operation.ADD_VALUE), slotGroup);
             }
             if (!stats.isBroken && stats.knockbackResistance > 0) {
                 event.addModifier(Attributes.KNOCKBACK_RESISTANCE, new AttributeModifier(
-                        KNOCKBACK_MODIFIER_IDS[slotIdx], stats.knockbackResistance, AttributeModifier.Operation.ADD_VALUE));
+                        KNOCKBACK_MODIFIER_IDS[slotIdx], stats.knockbackResistance, AttributeModifier.Operation.ADD_VALUE), slotGroup);
             }
-            // Штраф к скорости бега от веса брони
             if (stats.movementSpeedPenalty < 0) {
                 event.addModifier(Attributes.MOVEMENT_SPEED, new AttributeModifier(
-                        SPEED_PENALTY_IDS[slotIdx], stats.movementSpeedPenalty, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+                        SPEED_PENALTY_IDS[slotIdx], stats.movementSpeedPenalty, AttributeModifier.Operation.ADD_MULTIPLIED_BASE), slotGroup);
+            }
+        } else {
+            // Оружие и инструменты в главной руке
+            float damage = stats.isBroken ? 1.0f : stats.damage;
+            float speed = stats.isBroken ? 1.0f : stats.attackSpeed;
+
+            if (damage > 0) {
+                event.addModifier(Attributes.ATTACK_DAMAGE, new AttributeModifier(
+                        BASE_ATTACK_DAMAGE_ID, damage, AttributeModifier.Operation.ADD_VALUE), net.minecraft.world.entity.EquipmentSlotGroup.MAINHAND);
+            }
+            if (speed > 0) {
+                event.addModifier(Attributes.ATTACK_SPEED, new AttributeModifier(
+                        BASE_ATTACK_SPEED_ID, speed - 4.0, AttributeModifier.Operation.ADD_VALUE), net.minecraft.world.entity.EquipmentSlotGroup.MAINHAND);
             }
         }
     }

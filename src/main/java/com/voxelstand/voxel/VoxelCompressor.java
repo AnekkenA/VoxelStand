@@ -1,4 +1,4 @@
-﻿package com.voxelstand.voxel;
+package com.voxelstand.voxel;
 
 import com.voxelstand.api.VoxelConstants;
 import java.io.ByteArrayInputStream;

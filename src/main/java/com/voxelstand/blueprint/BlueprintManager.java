@@ -180,7 +180,7 @@ public final class BlueprintManager {
         BlueprintData bp = loadBlueprint(name);
         if (bp == null) return false;
 
-        Item item = BuiltInRegistries.ITEM.get(new ResourceLocation(bp.baseItem));
+        Item item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(bp.baseItem));
         if (item == Items.AIR) item = Items.IRON_SWORD;
 
         ItemStack stack = new ItemStack(item);
@@ -203,6 +203,10 @@ public final class BlueprintManager {
      * Мгновенное создание готового запечатанного предмета прямо из чертежа (для креатива).
      */
     public static ItemStack createItemFromBlueprint(String name) {
+        return createItemFromBlueprint(name, null);
+    }
+
+    public static ItemStack createItemFromBlueprint(String name, @org.jetbrains.annotations.Nullable net.minecraft.core.HolderLookup.Provider registries) {
         BlueprintData bp = loadBlueprint(name);
         if (bp == null) return ItemStack.EMPTY;
 
@@ -243,8 +247,14 @@ public final class BlueprintManager {
         rootTag.putString("QualityName", quality >= 1.25f ? "Чистое" : (quality >= 1.10f ? "Крепкое" : "Обычное"));
 
         // 3. Зачарования
-        for (Map.Entry<Enchantment, Integer> entry : stats.enchantments.entrySet()) {
-            stack.enchant(entry.getKey(), entry.getValue());
+        if (registries != null) {
+            var lookup = registries.lookup(net.minecraft.core.registries.Registries.ENCHANTMENT);
+            if (lookup.isPresent()) {
+                for (Map.Entry<ResourceLocation, Integer> entry : stats.enchantments.entrySet()) {
+                    var enchHolder = lookup.get().get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.ENCHANTMENT, entry.getKey()));
+                    enchHolder.ifPresent(holder -> stack.enchant(holder, entry.getValue()));
+                }
+            }
         }
 
         // 4. Поза

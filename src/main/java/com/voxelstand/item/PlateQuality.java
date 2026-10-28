@@ -1,4 +1,4 @@
-﻿package com.voxelstand.item;
+package com.voxelstand.item;
 
 import java.util.Random;
 
@@ -62,7 +62,14 @@ public enum PlateQuality {
      * - Чистая:   5% (0.95 .. 1.0000)
      */
     public static PlateQuality rollFromSpyglass(Random random) {
-        double roll = random.nextDouble();
+        return rollFromSpyglass(random.nextDouble());
+    }
+
+    public static PlateQuality rollFromSpyglass(net.minecraft.util.RandomSource random) {
+        return rollFromSpyglass(random.nextDouble());
+    }
+
+    private static PlateQuality rollFromSpyglass(double roll) {
         if (roll < 0.75) {
             return NORMAL;
         } else if (roll < 0.95) {

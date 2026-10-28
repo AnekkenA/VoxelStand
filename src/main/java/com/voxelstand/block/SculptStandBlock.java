@@ -1,34 +1,35 @@
-﻿package com.voxelstand.block;
+package com.voxelstand.block;
 
+import com.mojang.serialization.MapCodec;
 import com.voxelstand.api.VoxelConstants;
 import com.voxelstand.block.entity.ModBlockEntities;
 import com.voxelstand.block.entity.SculptStandBlockEntity;
 import com.voxelstand.item.ChiselItem;
 import com.voxelstand.item.PlateItem;
 import com.voxelstand.item.PlateSize;
+import com.voxelstand.stats.ItemStatData;
+import com.voxelstand.stats.StatCalculator;
 import com.voxelstand.voxel.SymmetryHelper;
 import com.voxelstand.voxel.VoxelGrid;
 import com.voxelstand.voxel.VoxelMaterial;
-import com.voxelstand.stats.ItemStatData;
-import com.voxelstand.stats.StatCalculator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
-import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
-import java.util.Map;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,9 +37,22 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 public class SculptStandBlock extends BaseEntityBlock {
+    public static final MapCodec<SculptStandBlock> CODEC = simpleCodec(SculptStandBlock::new);
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    public SculptStandBlock(BlockBehaviour.Properties properties) {
+        super(properties);
+    }
+
     public SculptStandBlock() {
-        super(BlockBehaviour.Properties.of()
+        this(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.WOOD)
                 .strength(2.5f)
                 .sound(SoundType.WOOD)
@@ -57,17 +71,27 @@ public class SculptStandBlock extends BaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    protected ItemInteractionResult useItemOn(ItemStack held, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (hand != InteractionHand.MAIN_HAND) {
-            return InteractionResult.PASS;
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
+        InteractionResult res = handleInteraction(held, state, level, pos, player, hand, hit);
+        if (res == InteractionResult.PASS) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
 
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        return handleInteraction(ItemStack.EMPTY, state, level, pos, player, InteractionHand.MAIN_HAND, hit);
+    }
+
+    private InteractionResult handleInteraction(ItemStack held, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof SculptStandBlockEntity stand)) {
             return InteractionResult.PASS;
         }
-
-        ItemStack held = player.getItemInHand(hand);
 
         // =========================================================================
         // 1. НАСТРОЙКА СТОЙКИ И ЗАВЕРШЕНИЕ: Shift + ПКМ
@@ -82,7 +106,7 @@ public class SculptStandBlock extends BaseEntityBlock {
                         player.displayClientMessage(sym ?
                                 Component.translatable("message.customsmith.symmetry_enabled") :
                                 Component.translatable("message.customsmith.symmetry_disabled"), true);
-                        level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.get(), SoundSource.BLOCKS, 0.5f, 1.4f);
+                        level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.5f, 1.4f);
                     }
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }
@@ -96,7 +120,7 @@ public class SculptStandBlock extends BaseEntityBlock {
                             if (!player.addItem(updated)) {
                                 player.drop(updated, false);
                             }
-                            level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC, SoundSource.PLAYERS, 0.8f, 1.2f);
+                            level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.PLAYERS, 0.8f, 1.2f);
                             player.displayClientMessage(Component.literal("§a[Кузница] Предмет снят со стапеля с обновленной позой!"), true);
                             return InteractionResult.sidedSuccess(level.isClientSide);
                         }
@@ -126,7 +150,7 @@ public class SculptStandBlock extends BaseEntityBlock {
                             // Первое нажатие: предупреждение и отсчет 3 секунд
                             stand.setLastFinalizeAttempt(currentTime);
                             player.displayClientMessage(Component.literal("§c[Внимание!] §eВы собираетесь запечатать предмет! Перековка будет невозможна.\n§6Нажмите Shift + ПКМ еще раз в течение 3 секунд для подтверждения."), false);
-                            level.playSound(null, pos, SoundEvents.NOTE_BLOCK_BELL.get(), SoundSource.BLOCKS, 0.8f, 1.2f);
+                            level.playSound(null, pos, SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.BLOCKS, 0.8f, 1.2f);
                         }
                     }
                     return InteractionResult.sidedSuccess(level.isClientSide);
@@ -190,13 +214,13 @@ public class SculptStandBlock extends BaseEntityBlock {
 
                     if (!stats.enchantments.isEmpty()) {
                         StringBuilder enchSb = new StringBuilder("§dЗачарования: ");
-                        for (Map.Entry<Enchantment, Integer> entry : stats.enchantments.entrySet()) {
-                            enchSb.append("§5✦ ").append(entry.getKey().getFullname(entry.getValue()).getString()).append(" ");
+                        for (Map.Entry<ResourceLocation, Integer> entry : stats.enchantments.entrySet()) {
+                            enchSb.append("§5✦ ").append(Component.translatable("enchantment." + entry.getKey().getNamespace() + "." + entry.getKey().getPath()).getString()).append(" ").append(entry.getValue()).append(" ");
                         }
                         player.displayClientMessage(Component.literal(enchSb.toString()), false);
                     }
                     player.displayClientMessage(Component.literal("§7(Для завершения ковки нажмите §6Shift + ПКМ дважды§7)"), false);
-                    level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.get(), SoundSource.BLOCKS, 0.3f, 1.8f);
+                    level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.3f, 1.8f);
                 }
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
@@ -208,7 +232,7 @@ public class SculptStandBlock extends BaseEntityBlock {
         if (stand.getMode() == SculptStandBlockEntity.StandMode.EMPTY && !held.isEmpty()) {
             if (stand.setItem(held.split(1))) {
                 if (!level.isClientSide) {
-                    level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC, SoundSource.BLOCKS, 0.8f, 1.0f);
+                    level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.BLOCKS, 0.8f, 1.0f);
                     player.displayClientMessage(Component.literal("§aПредмет установлен на стапель. Авто-каркас сформирован!"), true);
                 }
                 return InteractionResult.sidedSuccess(level.isClientSide);
@@ -227,7 +251,7 @@ public class SculptStandBlock extends BaseEntityBlock {
                         player.displayClientMessage(Component.literal(stand.getCurrentPose().twoHanded ?
                                 "§a[Стойка] Переключено на ДВУРУЧНЫЙ хват!" :
                                 "§e[Стойка] Переключено на ОДНОРУЧНЫЙ хват."), true);
-                        level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.get(), SoundSource.BLOCKS, 0.5f, 1.5f);
+                        level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.5f, 1.5f);
                     }
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }

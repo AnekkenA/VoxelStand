@@ -1,4 +1,4 @@
-﻿package com.voxelstand.voxel;
+package com.voxelstand.voxel;
 
 import com.voxelstand.api.VoxelConstants;
 import java.util.Arrays;
@@ -97,6 +97,12 @@ public class VoxelGrid {
         System.arraycopy(this.voxels, 0, copy.voxels, 0, this.voxels.length);
         copy.nonEmptyCount = this.nonEmptyCount;
         return copy;
+    }
+
+    public void copyFrom(VoxelGrid other) {
+        if (other == null) return;
+        System.arraycopy(other.voxels, 0, this.voxels, 0, Math.min(other.voxels.length, this.voxels.length));
+        this.nonEmptyCount = other.nonEmptyCount;
     }
 
     /**

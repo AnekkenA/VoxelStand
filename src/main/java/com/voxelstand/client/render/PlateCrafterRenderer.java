@@ -1,4 +1,4 @@
-﻿package com.voxelstand.client.render;
+package com.voxelstand.client.render;
 
 import com.voxelstand.block.entity.PlateCrafterBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -59,42 +59,42 @@ public class PlateCrafterRenderer implements BlockEntityRenderer<PlateCrafterBlo
     private void renderBox(VertexConsumer builder, Matrix4f mat, float x1, float y1, float z1,
                            float x2, float y2, float z2, float r, float g, float b, int light, int overlay) {
         // TOP (+Y)
-        builder.vertex(mat, x1, y2, z1).color(r, g, b, 1.0f).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(mat, x1, y2, z2).color(r, g, b, 1.0f).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(mat, x2, y2, z2).color(r, g, b, 1.0f).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(mat, x2, y2, z1).color(r, g, b, 1.0f).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
+        builder.addVertex(mat, x1, y2, z1).setColor(r, g, b, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x1, y2, z2).setColor(r, g, b, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x2, y2, z2).setColor(r, g, b, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x2, y2, z1).setColor(r, g, b, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
 
         // BOTTOM (-Y)
         float rb = r * 0.6f, gb = g * 0.6f, bb = b * 0.6f;
-        builder.vertex(mat, x1, y1, z2).color(rb, gb, bb, 1.0f).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, -1, 0).endVertex();
-        builder.vertex(mat, x1, y1, z1).color(rb, gb, bb, 1.0f).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, -1, 0).endVertex();
-        builder.vertex(mat, x2, y1, z1).color(rb, gb, bb, 1.0f).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, -1, 0).endVertex();
-        builder.vertex(mat, x2, y1, z2).color(rb, gb, bb, 1.0f).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, -1, 0).endVertex();
+        builder.addVertex(mat, x1, y1, z2).setColor(rb, gb, bb, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+        builder.addVertex(mat, x1, y1, z1).setColor(rb, gb, bb, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+        builder.addVertex(mat, x2, y1, z1).setColor(rb, gb, bb, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+        builder.addVertex(mat, x2, y1, z2).setColor(rb, gb, bb, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
 
         // SIDES
         float rs = r * 0.8f, gs = g * 0.8f, bs = b * 0.8f;
         // NORTH (-Z)
-        builder.vertex(mat, x2, y1, z1).color(rs, gs, bs, 1.0f).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 0, -1).endVertex();
-        builder.vertex(mat, x1, y1, z1).color(rs, gs, bs, 1.0f).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 0, -1).endVertex();
-        builder.vertex(mat, x1, y2, z1).color(rs, gs, bs, 1.0f).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 0, -1).endVertex();
-        builder.vertex(mat, x2, y2, z1).color(rs, gs, bs, 1.0f).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 0, -1).endVertex();
+        builder.addVertex(mat, x2, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
+        builder.addVertex(mat, x1, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
+        builder.addVertex(mat, x1, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
+        builder.addVertex(mat, x2, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
 
         // SOUTH (+Z)
-        builder.vertex(mat, x1, y1, z2).color(rs, gs, bs, 1.0f).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 0, 1).endVertex();
-        builder.vertex(mat, x2, y1, z2).color(rs, gs, bs, 1.0f).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 0, 1).endVertex();
-        builder.vertex(mat, x2, y2, z2).color(rs, gs, bs, 1.0f).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 0, 1).endVertex();
-        builder.vertex(mat, x1, y2, z2).color(rs, gs, bs, 1.0f).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 0, 1).endVertex();
+        builder.addVertex(mat, x1, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(mat, x2, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(mat, x2, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(mat, x1, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
 
         // WEST (-X)
-        builder.vertex(mat, x1, y1, z1).color(rs, gs, bs, 1.0f).uv(0, 0).overlayCoords(overlay).uv2(light).normal(-1, 0, 0).endVertex();
-        builder.vertex(mat, x1, y1, z2).color(rs, gs, bs, 1.0f).uv(1, 0).overlayCoords(overlay).uv2(light).normal(-1, 0, 0).endVertex();
-        builder.vertex(mat, x1, y2, z2).color(rs, gs, bs, 1.0f).uv(1, 1).overlayCoords(overlay).uv2(light).normal(-1, 0, 0).endVertex();
-        builder.vertex(mat, x1, y2, z1).color(rs, gs, bs, 1.0f).uv(0, 1).overlayCoords(overlay).uv2(light).normal(-1, 0, 0).endVertex();
+        builder.addVertex(mat, x1, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
+        builder.addVertex(mat, x1, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
+        builder.addVertex(mat, x1, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
+        builder.addVertex(mat, x1, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
 
         // EAST (+X)
-        builder.vertex(mat, x2, y1, z2).color(rs, gs, bs, 1.0f).uv(0, 0).overlayCoords(overlay).uv2(light).normal(1, 0, 0).endVertex();
-        builder.vertex(mat, x2, y1, z1).color(rs, gs, bs, 1.0f).uv(1, 0).overlayCoords(overlay).uv2(light).normal(1, 0, 0).endVertex();
-        builder.vertex(mat, x2, y2, z1).color(rs, gs, bs, 1.0f).uv(1, 1).overlayCoords(overlay).uv2(light).normal(1, 0, 0).endVertex();
-        builder.vertex(mat, x2, y2, z2).color(rs, gs, bs, 1.0f).uv(0, 1).overlayCoords(overlay).uv2(light).normal(1, 0, 0).endVertex();
+        builder.addVertex(mat, x2, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
+        builder.addVertex(mat, x2, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
+        builder.addVertex(mat, x2, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
+        builder.addVertex(mat, x2, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
     }
 }

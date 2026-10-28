@@ -1,4 +1,4 @@
-﻿package com.voxelstand.blueprint;
+package com.voxelstand.blueprint;
 
 import com.voxelstand.api.ItemPoseData;
 import com.voxelstand.block.entity.SculptStandBlockEntity;

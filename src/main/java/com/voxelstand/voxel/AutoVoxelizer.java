@@ -1,4 +1,4 @@
-﻿package com.voxelstand.voxel;
+package com.voxelstand.voxel;
 
 import net.minecraft.world.item.*;
 

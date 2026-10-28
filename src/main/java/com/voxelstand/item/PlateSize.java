@@ -1,4 +1,4 @@
-﻿package com.voxelstand.item;
+package com.voxelstand.item;
 
 public enum PlateSize {
     SIZE_16x16("16x16", 16, 16, 1, 2), // 256 вокселей = 2 слитка

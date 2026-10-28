@@ -1,4 +1,4 @@
-﻿package com.voxelstand.api;
+package com.voxelstand.api;
 
 public final class VoxelConstants {
     private VoxelConstants() {}

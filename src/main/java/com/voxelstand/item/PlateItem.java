@@ -306,11 +306,11 @@ public class PlateItem extends Item {
                     // Чистая: звук получения опыта + кузнечный стол + яркий звон колокольчика
                     level.playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0f, 1.3f);
                     level.playSound(null, player.blockPosition(), SoundEvents.SMITHING_TABLE_USE, SoundSource.PLAYERS, 0.85f, 1.2f);
-                    level.playSound(null, player.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.get(), SoundSource.PLAYERS, 0.85f, 1.8f);
+                    level.playSound(null, player.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 0.85f, 1.8f);
                 } else if (rolled == PlateQuality.STURDY) {
                     // Крепкая: звонкий удар наковальни + нотный блок (колокольчик)
                     level.playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.75f, 1.2f);
-                    level.playSound(null, player.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.get(), SoundSource.PLAYERS, 0.70f, 1.2f);
+                    level.playSound(null, player.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 0.70f, 1.2f);
                 } else {
                     // Обычная: звук работы на кузнечном столе (инструментальщик)
                     level.playSound(null, player.blockPosition(), SoundEvents.SMITHING_TABLE_USE, SoundSource.PLAYERS, 0.85f, 1.0f);

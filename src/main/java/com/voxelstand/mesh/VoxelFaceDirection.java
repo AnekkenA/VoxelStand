@@ -1,4 +1,4 @@
-﻿package com.voxelstand.mesh;
+package com.voxelstand.mesh;
 
 public enum VoxelFaceDirection {
     DOWN(0, -1, 0),

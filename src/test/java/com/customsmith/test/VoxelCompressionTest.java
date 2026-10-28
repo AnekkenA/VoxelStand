@@ -1,4 +1,4 @@
-﻿package com.voxelstand.test;
+package com.voxelstand.test;
 
 import com.voxelstand.api.VoxelConstants;
 import com.voxelstand.voxel.VoxelCompressor;

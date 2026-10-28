@@ -1,6 +1,7 @@
-﻿package com.voxelstand.block.entity;
+package com.voxelstand.block.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -50,8 +51,8 @@ public class PlateCrafterBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
         tag.putFloat("WheelAngle", this.wheelAngle);
         tag.putFloat("SpinSpeed", this.spinSpeed);
         tag.putInt("SpinTicks", this.spinTicksRemaining);
@@ -59,16 +60,16 @@ public class PlateCrafterBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+    public void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
         this.wheelAngle = tag.getFloat("WheelAngle");
         this.spinSpeed = tag.getFloat("SpinSpeed");
         this.spinTicksRemaining = tag.getInt("SpinTicks");
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         tag.putFloat("WheelAngle", this.wheelAngle);
         tag.putFloat("SpinSpeed", this.spinSpeed);
         tag.putInt("SpinTicks", this.spinTicksRemaining);

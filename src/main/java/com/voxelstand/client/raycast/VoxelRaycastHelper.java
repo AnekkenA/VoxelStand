@@ -1,4 +1,4 @@
-﻿package com.voxelstand.client.raycast;
+package com.voxelstand.client.raycast;
 
 import com.voxelstand.api.VoxelConstants;
 import com.voxelstand.mesh.VoxelFaceDirection;

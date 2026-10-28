@@ -1,4 +1,4 @@
-﻿package com.voxelstand.client.render;
+package com.voxelstand.client.render;
 
 import com.voxelstand.block.entity.SculptStandBlockEntity;
 import com.voxelstand.mesh.GreedyMesher;
@@ -143,12 +143,7 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
             }
 
             // Динамический сдвиг для взрыв-схемы
-            float offset = stand.getPartOffset(part);
-            if (part.contains("left")) {
-                poseStack.translate(offset, 0, 0);
-            } else if (part.contains("right")) {
-                poseStack.translate(-offset, 0, 0);
-            }
+            applyPartTransform(poseStack, part, stand.getPartOffset(part));
 
             List<VoxelQuad> quads = GreedyMesher.mesh(grid);
             VertexConsumer solidBuffer = bufferSource.getBuffer(RenderType.solid());
@@ -169,6 +164,14 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
             }
 
             poseStack.popPose();
+        }
+    }
+
+    private void applyPartTransform(PoseStack poseStack, String part, float offset) {
+        if (part.contains("left")) {
+            poseStack.translate(offset, 0, 0);
+        } else if (part.contains("right")) {
+            poseStack.translate(-offset, 0, 0);
         }
     }
 
@@ -209,38 +212,38 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
         float r = quad.getRed(), g = quad.getGreen(), b = quad.getBlue();
         switch (quad.direction) {
             case UP -> {
-                builder.vertex(mat, x1, y2, z1).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-                builder.vertex(mat, x1, y2, z2).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-                builder.vertex(mat, x2, y2, z2).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-                builder.vertex(mat, x2, y2, z1).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
+                builder.addVertex(mat, x1, y2, z1).setColor(r, g, b, alpha).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+                builder.addVertex(mat, x1, y2, z2).setColor(r, g, b, alpha).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+                builder.addVertex(mat, x2, y2, z2).setColor(r, g, b, alpha).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+                builder.addVertex(mat, x2, y2, z1).setColor(r, g, b, alpha).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
             }
             case DOWN -> {
-                builder.vertex(mat, x1, y1, z2).color(r * 0.6f, g * 0.6f, b * 0.6f, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, -1, 0).endVertex();
-                builder.vertex(mat, x1, y1, z1).color(r * 0.6f, g * 0.6f, b * 0.6f, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, -1, 0).endVertex();
-                builder.vertex(mat, x2, y1, z1).color(r * 0.6f, g * 0.6f, b * 0.6f, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, -1, 0).endVertex();
-                builder.vertex(mat, x2, y1, z2).color(r * 0.6f, g * 0.6f, b * 0.6f, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, -1, 0).endVertex();
+                builder.addVertex(mat, x1, y1, z2).setColor(r * 0.6f, g * 0.6f, b * 0.6f, alpha).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+                builder.addVertex(mat, x1, y1, z1).setColor(r * 0.6f, g * 0.6f, b * 0.6f, alpha).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+                builder.addVertex(mat, x2, y1, z1).setColor(r * 0.6f, g * 0.6f, b * 0.6f, alpha).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+                builder.addVertex(mat, x2, y1, z2).setColor(r * 0.6f, g * 0.6f, b * 0.6f, alpha).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
             }
             default -> {
-                builder.vertex(mat, x1, y1, z2).color(r * 0.8f, g * 0.8f, b * 0.8f, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 0, 1).endVertex();
-                builder.vertex(mat, x2, y1, z2).color(r * 0.8f, g * 0.8f, b * 0.8f, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 0, 1).endVertex();
-                builder.vertex(mat, x2, y2, z2).color(r * 0.8f, g * 0.8f, b * 0.8f, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 0, 1).endVertex();
-                builder.vertex(mat, x1, y2, z2).color(r * 0.8f, g * 0.8f, b * 0.8f, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 0, 1).endVertex();
+                builder.addVertex(mat, x1, y1, z2).setColor(r * 0.8f, g * 0.8f, b * 0.8f, alpha).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+                builder.addVertex(mat, x2, y1, z2).setColor(r * 0.8f, g * 0.8f, b * 0.8f, alpha).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+                builder.addVertex(mat, x2, y2, z2).setColor(r * 0.8f, g * 0.8f, b * 0.8f, alpha).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+                builder.addVertex(mat, x1, y2, z2).setColor(r * 0.8f, g * 0.8f, b * 0.8f, alpha).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
             }
         }
     }
 
     private void renderBox(VertexConsumer builder, Matrix4f mat, float x1, float y1, float z1,
                            float x2, float y2, float z2, float r, float g, float b, float a, int light, int overlay) {
-        builder.vertex(mat, x1, y2, z1).color(r, g, b, a).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(mat, x1, y2, z2).color(r, g, b, a).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(mat, x2, y2, z2).color(r, g, b, a).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(mat, x2, y2, z1).color(r, g, b, a).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
+        builder.addVertex(mat, x1, y2, z1).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x1, y2, z2).setColor(r, g, b, a).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x2, y2, z2).setColor(r, g, b, a).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x2, y2, z1).setColor(r, g, b, a).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
     }
 
     private void renderSymmetryLine(PoseStack poseStack, MultiBufferSource bufferSource) {
         VertexConsumer lines = bufferSource.getBuffer(RenderType.lines());
         Matrix4f mat = poseStack.last().pose();
-        lines.vertex(mat, 0, 0, -0.5f).color(0.3f, 0.8f, 1.0f, 0.8f).normal(0, 1, 0).endVertex();
-        lines.vertex(mat, 0, 1.2f, -0.5f).color(0.3f, 0.8f, 1.0f, 0.8f).normal(0, 1, 0).endVertex();
+        lines.addVertex(mat, 0f, 0f, -0.5f).setColor(0.3f, 0.8f, 1.0f, 0.8f).setNormal(0f, 1f, 0f);
+        lines.addVertex(mat, 0f, 1.2f, -0.5f).setColor(0.3f, 0.8f, 1.0f, 0.8f).setNormal(0f, 1f, 0f);
     }
 }

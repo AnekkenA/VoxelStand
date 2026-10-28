@@ -39,10 +39,21 @@ import org.jetbrains.annotations.Nullable;
  * - Поддерживает любые сторонние предметы с тегами #c:ingots, #c:gems, #c:raw_materials с динамическим семплированием цвета центрального пикселя!
  */
 public class PlateCrafterBlock extends BaseEntityBlock {
+    public static final com.mojang.serialization.MapCodec<PlateCrafterBlock> CODEC = simpleCodec(PlateCrafterBlock::new);
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
     private static PlateSize currentSelectedSize = PlateSize.SIZE_16x16;
 
+    public PlateCrafterBlock(BlockBehaviour.Properties properties) {
+        super(properties);
+    }
+
     public PlateCrafterBlock() {
-        super(BlockBehaviour.Properties.of()
+        this(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.WOOD)
                 .strength(2.5F)
                 .sound(SoundType.WOOD));
@@ -80,7 +91,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
                 player.displayClientMessage(
                         Component.literal("§e[Нарезчик] Выбран размер: §f" + currentSelectedSize.getName() +
                                 " §7(выход: " + currentSelectedSize.getCraftYield() + " шт., расход: " + currentSelectedSize.getIngredientCost() + " слиток)"), true);
-                level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.get(), SoundSource.BLOCKS, 0.5f, 1.2f);
+                level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.5f, 1.2f);
             }
             return ItemInteractionResult.SUCCESS;
         }
@@ -99,7 +110,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
                     PlateQuality quality = PlateItem.getQuality(held);
                     player.displayClientMessage(Component.literal("§a[Нарезчик] Пластина уже изучена: " + (quality != null ? quality.getDisplayName() : "") + " качество."), true);
                 }
-                level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.get(), SoundSource.BLOCKS, 0.4f, 1.4f);
+                level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.4f, 1.4f);
             }
             return ItemInteractionResult.SUCCESS;
         }

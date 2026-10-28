@@ -1,4 +1,4 @@
-﻿package com.voxelstand.mesh;
+package com.voxelstand.mesh;
 
 import com.voxelstand.voxel.VoxelMaterial;
 

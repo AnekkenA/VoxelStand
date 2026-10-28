@@ -1,4 +1,4 @@
-﻿package com.voxelstand.test;
+package com.voxelstand.test;
 
 import com.voxelstand.voxel.SymmetryHelper;
 import com.voxelstand.voxel.VoxelGrid;

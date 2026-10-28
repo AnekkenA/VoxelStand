@@ -91,10 +91,10 @@ public class CustomArmorLayerRenderer {
             float z2 = quad.z2 * scale;
 
             float r = quad.getRed(), g = quad.getGreen(), b = quad.getBlue();
-            buffer.vertex(mat, x1, y2, z1).color(r, g, b, 1.0f).uv(0, 0).overlayCoords(0).uv2(light).normal(0, 1, 0).endVertex();
-            buffer.vertex(mat, x1, y2, z2).color(r, g, b, 1.0f).uv(0, 1).overlayCoords(0).uv2(light).normal(0, 1, 0).endVertex();
-            buffer.vertex(mat, x2, y2, z2).color(r, g, b, 1.0f).uv(1, 1).overlayCoords(0).uv2(light).normal(0, 1, 0).endVertex();
-            buffer.vertex(mat, x2, y2, z1).color(r, g, b, 1.0f).uv(1, 0).overlayCoords(0).uv2(light).normal(0, 1, 0).endVertex();
+            buffer.addVertex(mat, x1, y2, z1).setColor(r, g, b, 1.0f).setUv(0, 0).setOverlay(0).setLight(light).setNormal(0, 1, 0);
+            buffer.addVertex(mat, x1, y2, z2).setColor(r, g, b, 1.0f).setUv(0, 1).setOverlay(0).setLight(light).setNormal(0, 1, 0);
+            buffer.addVertex(mat, x2, y2, z2).setColor(r, g, b, 1.0f).setUv(1, 1).setOverlay(0).setLight(light).setNormal(0, 1, 0);
+            buffer.addVertex(mat, x2, y2, z1).setColor(r, g, b, 1.0f).setUv(1, 0).setOverlay(0).setLight(light).setNormal(0, 1, 0);
         }
 
         poseStack.popPose();
