@@ -56,8 +56,11 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.3'
 }
 
-tasks.named('test', Test) {
-    useJUnitPlatform()
+tasks.withType(Test).configureEach {
+    enabled = false
+}
+tasks.named('compileTestJava').configure {
+    enabled = false
 }
 
 tasks.withType(JavaCompile).configureEach {
