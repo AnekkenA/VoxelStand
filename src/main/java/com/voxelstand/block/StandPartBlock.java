@@ -41,7 +41,23 @@ public class StandPartBlock extends BaseEntityBlock {
                 .mapColor(MapColor.WOOD)
                 .strength(2.5f)
                 .sound(SoundType.WOOD)
-                .noOcclusion());
+                .noOcclusion()
+                .isViewBlocking((s, l, p) -> false));
+    }
+
+    @Override
+    public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
+        return 1.0F;
+    }
+
+    @Override
+    public boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
+        return true;
+    }
+
+    @Override
+    public boolean useShapeForLightOcclusion(BlockState state) {
+        return false;
     }
 
     @Override
@@ -51,12 +67,12 @@ public class StandPartBlock extends BaseEntityBlock {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Shapes.block();
+        return Shapes.box(0.0, 0.0, 0.0, 1.0, 0.95, 1.0);
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Shapes.block();
+        return Shapes.box(0.0, 0.0, 0.0, 1.0, 0.95, 1.0);
     }
 
     @Nullable
@@ -89,6 +105,20 @@ public class StandPartBlock extends BaseEntityBlock {
             }
         }
         return InteractionResult.PASS;
+    }
+
+    @Override
+    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof StandPartBlockEntity part) {
+            BlockPos master = part.getMasterPos();
+            if (master != null && !master.equals(BlockPos.ZERO)) {
+                BlockState masterState = level.getBlockState(master);
+                masterState.attack(level, master, player);
+                return;
+            }
+        }
+        super.attack(state, level, pos, player);
     }
 
     @Override

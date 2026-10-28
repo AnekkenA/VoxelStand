@@ -4,7 +4,11 @@ import com.voxelstand.voxel.VoxelMaterial;
 
 /**
  * Оптимизированный прямоугольный полигон (Quad), созданный жадным мешингом.
- * Координаты нормализованы в диапазоне от 0.0 до 1.0 (или от 0 до 32).
+ * Поддерживает 5-битную палитру материалов (0..31) и 2-битное тональное затенение игрока (биты 5..6):
+ *  0 = Базовый тон (1.0x)
+ *  1 = Светлый тон (+18% яркости)
+ *  2 = Тёмный тон / тень (-18% яркости)
+ *  3 = Глубокая тень (-32% яркости)
  */
 public class VoxelQuad {
     public final float x1, y1, z1;
@@ -28,7 +32,21 @@ public class VoxelQuad {
 
         VoxelMaterial mat = VoxelMaterial.byId(materialId);
         this.emissive = mat.isEmissive();
-        this.rgb = mat.getRgb();
+        int baseRgb = mat.getRgb();
+
+        // Извлечение тона из бит 5 и 6 (0..3)
+        int tone = ((materialId & 0xFF) >> 5) & 3;
+        float factor = switch (tone) {
+            case 1 -> 1.18f; // Светлее
+            case 2 -> 0.82f; // Теневой
+            case 3 -> 0.68f; // Глубокая тень
+            default -> 1.0f; // Базовый
+        };
+
+        int r = Math.min(255, Math.max(0, (int) (((baseRgb >> 16) & 0xFF) * factor)));
+        int g = Math.min(255, Math.max(0, (int) (((baseRgb >> 8) & 0xFF) * factor)));
+        int b = Math.min(255, Math.max(0, (int) ((baseRgb & 0xFF) * factor)));
+        this.rgb = (r << 16) | (g << 8) | b;
     }
 
     public float getRed() {

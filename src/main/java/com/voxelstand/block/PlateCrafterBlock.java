@@ -71,7 +71,23 @@ public class PlateCrafterBlock extends BaseEntityBlock {
                 .mapColor(MapColor.WOOD)
                 .strength(2.5F)
                 .sound(SoundType.WOOD)
-                .noOcclusion());
+                .noOcclusion()
+                .isViewBlocking((s, l, p) -> false));
+    }
+
+    @Override
+    public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
+        return 1.0F;
+    }
+
+    @Override
+    public boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
+        return true;
+    }
+
+    @Override
+    public boolean useShapeForLightOcclusion(BlockState state) {
+        return false;
     }
 
     @Override

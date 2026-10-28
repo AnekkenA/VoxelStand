@@ -2,18 +2,30 @@ package com.voxelstand.client;
 
 import com.voxelstand.VoxelStandMod;
 import com.voxelstand.block.entity.ModBlockEntities;
+import com.voxelstand.client.gui.SculptStandHudOverlay;
 import com.voxelstand.client.render.PlateCrafterRenderer;
 import com.voxelstand.client.render.SculptStandRenderer;
+import com.voxelstand.client.render.VoxelDelegatingBakedModel;
+import com.voxelstand.client.render.VoxelItemRenderer;
 import com.voxelstand.item.ModItems;
 import com.voxelstand.item.PlateItem;
-import com.voxelstand.client.gui.SculptStandHudOverlay;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+
+import java.util.Map;
 
 @EventBusSubscriber(modid = VoxelStandMod.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientSetup {
@@ -52,5 +64,30 @@ public class ClientSetup {
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
         // Регистрация HUD-оверлея стапеля поверх прицела
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(VoxelStandMod.MOD_ID, "sculpt_stand_hud"), new SculptStandHudOverlay());
+    }
+
+    @SubscribeEvent
+    public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
+        IClientItemExtensions voxelExtension = new IClientItemExtensions() {
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return VoxelItemRenderer.INSTANCE;
+            }
+        };
+
+        for (Item item : BuiltInRegistries.ITEM) {
+            event.registerItem(voxelExtension, item);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        Map<ModelResourceLocation, BakedModel> models = event.getModels();
+        for (Map.Entry<ModelResourceLocation, BakedModel> entry : models.entrySet()) {
+            BakedModel original = entry.getValue();
+            if (original != null && !(original instanceof VoxelDelegatingBakedModel)) {
+                entry.setValue(new VoxelDelegatingBakedModel(original));
+            }
+        }
     }
 }

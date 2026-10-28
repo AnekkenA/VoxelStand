@@ -372,12 +372,20 @@ public class SculptStandBlockEntity extends BlockEntity {
             }
         } else {
             CompoundTag modelTag = new CompoundTag();
+            byte[] mainPartCompressed = null;
             for (Map.Entry<String, VoxelGrid> entry : grids.entrySet()) {
                 if (entry.getValue().getNonEmptyCount() > 0) {
-                    modelTag.putByteArray(entry.getKey(), VoxelCompressor.compress(entry.getValue()));
+                    byte[] comp = VoxelCompressor.compress(entry.getValue());
+                    modelTag.putByteArray(entry.getKey(), comp);
+                    if (mainPartCompressed == null || entry.getKey().equals("body") || entry.getKey().equals("head") || entry.getKey().equals("pelvis")) {
+                        mainPartCompressed = comp;
+                    }
                 }
             }
             rootTag.put(VoxelConstants.NBT_VOXEL_MODEL, modelTag);
+            if (mainPartCompressed != null) {
+                rootTag.putByteArray(VoxelConstants.NBT_VOXEL_DATA, mainPartCompressed);
+            }
         }
 
         // 2. Р—Р°РїРёСЃСЊ RPG-С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРє Рё РєР°С‡РµСЃС‚РІР°

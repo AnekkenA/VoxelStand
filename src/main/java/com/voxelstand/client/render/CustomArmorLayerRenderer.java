@@ -7,11 +7,11 @@ import com.voxelstand.voxel.VoxelCompressor;
 import com.voxelstand.voxel.VoxelGrid;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,6 +25,7 @@ import java.util.Map;
 /**
  * Рендерер кастомного воксельного слоя брони на игроке и мобах.
  * Привязывает отрендеренный меш прямо к соответствующим костям HumanoidModel.
+ * Использует entityCutoutNoCull, предотвращая выворачивание полигонов при инверсии по Y.
  */
 public class CustomArmorLayerRenderer {
     private static final Map<String, List<VoxelQuad>> MESH_CACHE = new HashMap<>();
@@ -41,18 +42,18 @@ public class CustomArmorLayerRenderer {
         switch (slot) {
             case HEAD -> renderPartToBone(poseStack, bufferSource, modelTag, "head", model.head, 0, -0.25f, 0, packedLight);
             case CHEST -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "body", model.body, 0, 0.35f, 0, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "left_arm", model.leftArm, 0.05f, 0.25f, 0, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "right_arm", model.rightArm, -0.05f, 0.25f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "body", model.body, 0, 0.375f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "left_arm", model.leftArm, 0.0625f, 0.25f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "right_arm", model.rightArm, -0.0625f, 0.25f, 0, packedLight);
             }
             case LEGS -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "pelvis", model.body, 0, 0.55f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "pelvis", model.body, 0, 0.65f, 0, packedLight);
                 renderPartToBone(poseStack, bufferSource, modelTag, "left_leg", model.leftLeg, 0, 0.35f, 0, packedLight);
                 renderPartToBone(poseStack, bufferSource, modelTag, "right_leg", model.rightLeg, 0, 0.35f, 0, packedLight);
             }
             case FEET -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "left_boot", model.leftLeg, 0, 0.55f, 0, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "right_boot", model.rightLeg, 0, 0.55f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "left_boot", model.leftLeg, 0, 0.60f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "right_boot", model.rightLeg, 0, 0.60f, 0, packedLight);
             }
         }
     }
@@ -66,8 +67,8 @@ public class CustomArmorLayerRenderer {
         bone.translateAndRotate(poseStack);
 
         poseStack.translate(offX, offY, offZ);
-        // Масштаб: 32 вокселя соответствуют 16 пикселям игрока
-        poseStack.scale(0.55f, -0.55f, 0.55f);
+        // Масштаб: 32 вокселя соответствуют 16 пикселям игрока + небольшой зазор
+        poseStack.scale(0.56f, -0.56f, 0.56f);
         poseStack.translate(-0.5, -0.5, -0.5);
 
         byte[] data = modelTag.getByteArray(partName);
@@ -78,7 +79,8 @@ public class CustomArmorLayerRenderer {
             return GreedyMesher.mesh(grid);
         });
 
-        VertexConsumer buffer = bufferSource.getBuffer(RenderType.solid());
+        // Entity cutout без culling для правильного отображения фронтальных и тыльных граней
+        VertexConsumer buffer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
         Matrix4f mat = poseStack.last().pose();
         float scale = 1.0f / 32.0f;
 

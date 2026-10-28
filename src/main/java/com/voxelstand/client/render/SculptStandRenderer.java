@@ -7,6 +7,8 @@ import com.voxelstand.mesh.VoxelQuad;
 import com.voxelstand.voxel.VoxelGrid;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -36,6 +38,16 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
         Direction facing = stand.getBlockState().hasProperty(SculptStandBlock.FACING) ?
                 stand.getBlockState().getValue(SculptStandBlock.FACING) : Direction.NORTH;
 
+        // Расчет света над стапелем, чтобы соседние блоки не погружали воксели в глубокую тень
+        int effectiveLight = packedLight;
+        if (stand.getLevel() != null) {
+            int aboveLight = LevelRenderer.getLightColor(stand.getLevel(), stand.getBlockPos().above());
+            effectiveLight = Math.max(packedLight, aboveLight);
+        }
+        int bl = Math.max(LightTexture.block(effectiveLight), 7);
+        int sl = Math.max(LightTexture.sky(effectiveLight), 7);
+        effectiveLight = LightTexture.pack(bl, sl);
+
         poseStack.pushPose();
         // Вращение строго синхронно с blockstate-моделью Minecraft вокруг центра мастер-блока
         poseStack.translate(0.5, 0.0, 0.5);
@@ -48,11 +60,11 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
         SculptStandBlockEntity.StandMode mode = stand.getMode();
 
         // 1. Отрисовка воксельных частей модели (жадный меш)
-        renderVoxelMeshes(stand, mode, poseStack, bufferSource, packedLight, packedOverlay);
+        renderVoxelMeshes(stand, mode, poseStack, bufferSource, effectiveLight, packedOverlay);
 
         // 2. Отрисовка голограммы-призрака чертежа (прозрачность 0.7f по ТЗ)
         if (stand.hasGhostBlueprint()) {
-            renderGhostMeshes(stand, mode, poseStack, bufferSource, packedLight, packedOverlay);
+            renderGhostMeshes(stand, mode, poseStack, bufferSource, effectiveLight, packedOverlay);
         }
 
         // 3. Отрисовка индикатора симметрии
@@ -75,7 +87,7 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
             poseStack.pushPose();
 
             if (mode == SculptStandBlockEntity.StandMode.WEAPON) {
-                // Оружие лежит горизонтально поперек двух опор стола
+                // Оружие лежит горизонтально поперек двух люлек стола
                 poseStack.translate(0.0, 0.1125, 0.0);
                 poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90.0f));
                 poseStack.translate(0.0, -0.5, 0.0);
@@ -112,15 +124,19 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
     }
 
     private void applyPartTransform(PoseStack poseStack, String part, float offset) {
-        float baseArmShift = 0.35f;
-        if (part.contains("left_arm") || part.contains("left_leg") || part.contains("left_boot")) {
-            poseStack.translate(-baseArmShift + offset, 0, 0);
-        } else if (part.contains("right_arm") || part.contains("right_leg") || part.contains("right_boot")) {
-            poseStack.translate(baseArmShift - offset, 0, 0);
-        } else if (part.contains("left")) {
-            poseStack.translate(offset, 0, 0);
+        float shift;
+        if (part.contains("arm")) {
+            shift = 0.375f; // 6.0 BB-единиц от центра 16
+        } else if (part.contains("leg") || part.contains("boot")) {
+            shift = 0.15625f; // 2.5 BB-единиц от центра 16
+        } else {
+            shift = 0.0f;
+        }
+
+        if (part.contains("left")) {
+            poseStack.translate(-shift + offset, 0, 0);
         } else if (part.contains("right")) {
-            poseStack.translate(-offset, 0, 0);
+            poseStack.translate(shift - offset, 0, 0);
         }
     }
 
@@ -143,7 +159,8 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
                 poseStack.translate(0.0, -0.5, 0.0);
             }
 
-            applyPartTransform(poseStack, part, stand.getPartOffset(part));
+            applyPartTransform(poseStack, part, 0);
+
             Matrix4f mat = poseStack.last().pose();
 
             for (VoxelQuad quad : quads) {
@@ -155,8 +172,9 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
                 float y2 = quad.y2 * scale;
                 float z2 = (quad.z2 - 16) * scale;
 
+                // Призрачная полупрозрачность 0.7f
                 VoxelRenderHelper.renderFace(translucentBuffer, mat, x1, y1, z1, x2, y2, z2, quad.direction,
-                        quad.getRed(), quad.getGreen(), quad.getBlue(), 0.7f, 0xF000F0, overlay);
+                        quad.getRed(), quad.getGreen(), quad.getBlue(), 0.7f, light, overlay);
             }
 
             poseStack.popPose();
@@ -166,7 +184,12 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
     private void renderSymmetryLine(PoseStack poseStack, MultiBufferSource bufferSource) {
         VertexConsumer lines = bufferSource.getBuffer(RenderType.lines());
         Matrix4f mat = poseStack.last().pose();
-        lines.addVertex(mat, 0f, 0f, -0.5f).setColor(0.3f, 0.8f, 1.0f, 0.8f).setNormal(0f, 1f, 0f);
-        lines.addVertex(mat, 0f, 1.2f, -0.5f).setColor(0.3f, 0.8f, 1.0f, 0.8f).setNormal(0f, 1f, 0f);
+
+        // Вертикальная центральная линия зеркальной симметрии X=0
+        lines.addVertex(mat, 0.0f, 0.0f, -0.5f).setColor(0.3f, 0.8f, 1.0f, 0.8f).setNormal(0, 1, 0);
+        lines.addVertex(mat, 0.0f, 1.0f, -0.5f).setColor(0.3f, 0.8f, 1.0f, 0.8f).setNormal(0, 1, 0);
+
+        lines.addVertex(mat, 0.0f, 0.0f, 0.5f).setColor(0.3f, 0.8f, 1.0f, 0.8f).setNormal(0, 1, 0);
+        lines.addVertex(mat, 0.0f, 1.0f, 0.5f).setColor(0.3f, 0.8f, 1.0f, 0.8f).setNormal(0, 1, 0);
     }
 }

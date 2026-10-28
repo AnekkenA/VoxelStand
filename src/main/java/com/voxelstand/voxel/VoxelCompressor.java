@@ -30,7 +30,7 @@ public final class VoxelCompressor {
             byte currentMaterial = raw[0];
 
             for (int i = 0; i < raw.length; i++) {
-                byte mat = (byte) (raw[i] & VoxelConstants.MATERIAL_MASK);
+                byte mat = raw[i];
 
                 if (mat == currentMaterial && currentLength < 32767) {
                     currentLength++;

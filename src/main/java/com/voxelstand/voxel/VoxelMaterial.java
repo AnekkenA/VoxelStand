@@ -112,6 +112,6 @@ public enum VoxelMaterial {
     }
 
     public static VoxelMaterial byId(byte id) {
-        return BY_ID.getOrDefault(id, AIR);
+        return BY_ID.getOrDefault((byte) (id & 0x1F), AIR);
     }
 }

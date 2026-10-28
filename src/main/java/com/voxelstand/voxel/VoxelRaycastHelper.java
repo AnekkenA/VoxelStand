@@ -8,10 +8,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Map;
+
 /**
  * 3D воксельный рейкаст для стапеля кузницы.
  * Преобразует вектор взгляда игрока из мировых координат в воксельную сетку 32x32x32
- * и находит точный воксел и смежную грань для скалывания долотом или наложения пластин.
+ * и находит точный воксел и смежную грань для скалывания долотом, смены тона или наложения пластин.
  */
 public class VoxelRaycastHelper {
 
@@ -47,20 +49,19 @@ public class VoxelRaycastHelper {
         SculptStandBlockEntity.StandMode mode = stand.getMode();
         boolean isWeapon = mode == SculptStandBlockEntity.StandMode.WEAPON;
 
-        // Поиск основной редактируемой детали
-        String mainPart = isWeapon ? "weapon" :
+        String defaultPart = isWeapon ? "weapon" :
                 (mode == SculptStandBlockEntity.StandMode.HELMET ? "head" :
                 (mode == SculptStandBlockEntity.StandMode.CHESTPLATE ? "body" :
                 (mode == SculptStandBlockEntity.StandMode.LEGGINGS ? "pelvis" : "left_boot")));
 
-        VoxelGrid grid = stand.getGrid(mainPart);
-        if (grid == null) return null;
+        Map<String, VoxelGrid> allGrids = stand.getAllGrids();
+        if (allGrids.isEmpty()) return null;
 
-        int prevVx = -1, prevVy = -1, prevVz = -1;
+        double maxDist = 5.0;
+        double step = 0.015; // Высокая точность выборки
 
-        // Трассировка луча с шагом 0.02 блока (~0.6 вокселя) на дистанцию до 4.5 блоков
-        double maxDist = 4.5;
-        double step = 0.02;
+        int lastVx = -1, lastVy = -1, lastVz = -1;
+        String lastPart = defaultPart;
 
         for (double d = 0.5; d <= maxDist; d += step) {
             double wx = eye.x + look.x * d;
@@ -84,61 +85,78 @@ public class VoxelRaycastHelper {
             double ty = ry - 0.95;
             double tz = rz - 0.5;
 
-            double localX, localY, localZ;
-
             if (isWeapon) {
                 // Обратное преобразование оружия:
-                // В рендерере: translate(0, 0.1125, 0), rotZ(-90), translate(0, -0.5, 0)
+                // forward: translate(0, 0.1125, 0) -> rotZ(-90) -> translate(0, -0.5, 0)
                 double noTy = ty - 0.1125;
-                // Обратный поворот Z: rotZ(+90)
-                // x' = -y, y' = x
                 double rotX = -noTy;
-                double rotY = tx;
+                double rotY = tx + 0.5;
                 double rotZ = tz;
 
-                // Обратный translate(0, -0.5, 0)
-                rotY = rotY + 0.5;
+                int vx = (int) Math.floor(rotX * 32.0 + 16.0);
+                int vy = (int) Math.floor(rotY * 32.0);
+                int vz = (int) Math.floor(rotZ * 32.0 + 16.0);
 
-                localX = rotX;
-                localY = rotY;
-                localZ = rotZ;
-            } else {
-                localX = tx;
-                localY = ty;
-                localZ = tz;
-            }
-
-            int vx = (int) Math.floor(localX * 32.0 + 16.0);
-            int vy = (int) Math.floor(localY * 32.0);
-            int vz = (int) Math.floor(localZ * 32.0 + 16.0);
-
-            if (VoxelGrid.isInBounds(vx, vy, vz)) {
-                if (grid.get(vx, vy, vz) != 0) {
-                    // Попадание в существующий воксел!
-                    int px = prevVx >= 0 ? prevVx : vx;
-                    int py = prevVy >= 0 ? prevVy : vy;
-                    int pz = prevVz >= 0 ? prevVz : vz;
-
-                    Direction hitFace = Direction.UP;
-                    if (prevVx > vx) hitFace = Direction.EAST;
-                    else if (prevVx < vx && prevVx >= 0) hitFace = Direction.WEST;
-                    else if (prevVy > vy) hitFace = Direction.UP;
-                    else if (prevVy < vy && prevVy >= 0) hitFace = Direction.DOWN;
-                    else if (prevVz > vz) hitFace = Direction.SOUTH;
-                    else if (prevVz < vz && prevVz >= 0) hitFace = Direction.NORTH;
-
-                    return new RaycastHit(vx, vy, vz, px, py, pz, hitFace, mainPart);
+                VoxelGrid g = allGrids.get("weapon");
+                if (g != null && VoxelGrid.isInBounds(vx, vy, vz)) {
+                    if (g.get(vx, vy, vz) != 0) {
+                        int px = lastVx >= 0 ? lastVx : vx;
+                        int py = lastVy >= 0 ? lastVy : vy;
+                        int pz = lastVz >= 0 ? lastVz : vz;
+                        return new RaycastHit(vx, vy, vz, px, py, pz, Direction.UP, "weapon");
+                    }
+                    lastVx = vx;
+                    lastVy = vy;
+                    lastVz = vz;
+                    lastPart = "weapon";
                 }
-                prevVx = vx;
-                prevVy = vy;
-                prevVz = vz;
+            } else {
+                // Проверяем каждую деталь брони с её собственным сдвигом
+                for (Map.Entry<String, VoxelGrid> entry : allGrids.entrySet()) {
+                    String part = entry.getKey();
+                    VoxelGrid g = entry.getValue();
+                    if (g == null || g.getNonEmptyCount() == 0) continue;
+
+                    double partShift = 0.0;
+                    if (part.contains("arm")) {
+                        partShift = 0.375;
+                    } else if (part.contains("leg") || part.contains("boot")) {
+                        partShift = 0.15625;
+                    }
+
+                    double ptx = tx;
+                    if (part.contains("left")) {
+                        ptx = tx + partShift;
+                    } else if (part.contains("right")) {
+                        ptx = tx - partShift;
+                    }
+
+                    int vx = (int) Math.floor(ptx * 32.0 + 16.0);
+                    int vy = (int) Math.floor(ty * 32.0);
+                    int vz = (int) Math.floor(tz * 32.0 + 16.0);
+
+                    if (VoxelGrid.isInBounds(vx, vy, vz)) {
+                        if (g.get(vx, vy, vz) != 0) {
+                            int px = lastVx >= 0 ? lastVx : vx;
+                            int py = lastVy >= 0 ? lastVy : vy;
+                            int pz = lastVz >= 0 ? lastVz : vz;
+                            return new RaycastHit(vx, vy, vz, px, py, pz, Direction.UP, part);
+                        }
+                        if (part.equals(defaultPart)) {
+                            lastVx = vx;
+                            lastVy = vy;
+                            lastVz = vz;
+                            lastPart = part;
+                        }
+                    }
+                }
             }
         }
 
-        // Если не попали в воксел, но игрок смотрит на рабочую зону стола:
-        if (prevVx >= 0 && prevVz >= 0) {
-            int py = Math.max(0, Math.min(31, prevVy));
-            return new RaycastHit(prevVx, py, prevVz, prevVx, py, prevVz, Direction.UP, mainPart);
+        // Если прямого попадания в воксел не было, возвращаем координату рабочей области стола
+        if (lastVx >= 0 && lastVz >= 0) {
+            int py = Math.max(0, Math.min(31, lastVy));
+            return new RaycastHit(lastVx, py, lastVz, lastVx, py, lastVz, Direction.UP, lastPart);
         }
 
         return null;
