@@ -1,10 +1,10 @@
 modLoader="javafml"
-loaderVersion="${loader_version_range}"
+loaderVersion="[4,)"
 license="MIT"
 
 [[mods]]
 modId="voxelstand"
-version="${mod_version}"
+version="1.0.0"
 displayName="Voxel Stand"
 authors="lma"
 description='''
@@ -16,13 +16,13 @@ Compatible with ~800 modpacks using #c convention tags.
 [[dependencies.voxelstand]]
     modId="neoforge"
     type="required"
-    versionRange="${neo_version_range}"
+    versionRange="[21.1,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.voxelstand]]
     modId="minecraft"
     type="required"
-    versionRange="${minecraft_version_range}"
+    versionRange="[1.21.1, 1.22)"
     ordering="NONE"
     side="BOTH"
