@@ -212,32 +212,40 @@ public final class StatCalculator {
         float massBonus = 0.0f;
 
         if (isArmor) {
-            // 5. Характеристики брони с поэлементными капами
-            float maxSlotArmor = 8.0f;
-            float maxSlotToughness = 3.0f;
+            // 5. Характеристики брони: базовая защита исходного предмета + физические улучшения
+            float baseDefense = 0.0f;
+            float baseToughness = 0.0f;
+            float baseKnockback = 0.0f;
 
             if (stack.getItem() instanceof net.minecraft.world.item.ArmorItem armorItem) {
-                switch (armorItem.getEquipmentSlot()) {
-                    case HEAD -> { maxSlotArmor = 4.0f; maxSlotToughness = 3.0f; }
-                    case CHEST -> { maxSlotArmor = 10.0f; maxSlotToughness = 4.0f; }
-                    case LEGS -> { maxSlotArmor = 8.0f; maxSlotToughness = 3.0f; }
-                    case FEET -> { maxSlotArmor = 4.0f; maxSlotToughness = 3.0f; }
-                    default -> {}
+                baseDefense = armorItem.getDefense();
+                baseToughness = armorItem.getToughness();
+                if (armorItem.getDescriptionId().contains("netherite")) {
+                    baseKnockback = 0.1f;
                 }
+            } else {
+                baseDefense = 4.0f;
             }
 
-            float rawArmor = (counts[VoxelMaterial.IRON.getId()] * 0.020f) +
-                             (counts[VoxelMaterial.COPPER.getId()] * 0.015f) +
-                             (counts[VoxelMaterial.DIAMOND.getId()] * 0.025f) +
-                             (counts[VoxelMaterial.NETHERITE.getId()] * 0.025f);
+            // Дополнительный бонус от добавленных пластин / утяжеления
+            float addedArmor = 0.0f;
+            float addedToughness = 0.0f;
+            float addedKnockback = 0.0f;
 
-            data.armor = Math.max(1.0f, Math.min(maxSlotArmor, rawArmor));
+            // Если общая масса брони превышает стандартный каркас (игрок наложил тяжелые пластины)
+            if (totalWeight > 450.0f) {
+                addedArmor += Math.min(1.0f, (totalWeight - 450.0f) / 350.0f);
+            }
+            if (counts[VoxelMaterial.NETHERITE.getId()] > 150) {
+                addedKnockback += Math.min(0.05f, (counts[VoxelMaterial.NETHERITE.getId()] - 150) * 0.0002f);
+            }
+            if (counts[VoxelMaterial.DIAMOND.getId()] > 150) {
+                addedToughness += Math.min(1.0f, (counts[VoxelMaterial.DIAMOND.getId()] - 150) * 0.003f);
+            }
 
-            float rawToughness = (counts[VoxelMaterial.DIAMOND.getId()] * 0.015f) +
-                                 (counts[VoxelMaterial.NETHERITE.getId()] * 0.015f);
-            data.armorToughness = Math.min(maxSlotToughness, rawToughness);
-
-            data.knockbackResistance = Math.min(0.25f, counts[VoxelMaterial.NETHERITE.getId()] * 0.0015f);
+            data.armor = baseDefense + addedArmor;
+            data.armorToughness = baseToughness + addedToughness;
+            data.knockbackResistance = baseKnockback + addedKnockback;
             data.damage = 0;
         } else if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.ShieldItem) {
             // Щит
@@ -298,27 +306,14 @@ public final class StatCalculator {
             data.knockbackResistance = 0;
         } else {
             // 7. Характеристики оружия ближнего боя / инструментов
-            float flintDmg = Math.min(2.0f, counts[VoxelMaterial.FLINT.getId()] * 0.025f);
-            float copperDmg = Math.min(3.0f, counts[VoxelMaterial.COPPER.getId()] * 0.030f);
-            float ironDmg = Math.min(4.0f, counts[VoxelMaterial.IRON.getId()] * 0.035f);
-            float diamondDmg = Math.min(5.0f, counts[VoxelMaterial.DIAMOND.getId()] * 0.035f);
-            float netheriteDmg = Math.min(6.0f, counts[VoxelMaterial.NETHERITE.getId()] * 0.035f);
-            float goldDmg = Math.min(2.0f, counts[VoxelMaterial.GOLD.getId()] * 0.020f);
-            float obsidianDmg = Math.min(3.5f, counts[VoxelMaterial.OBSIDIAN.getId()] * 0.025f);
+            float baseDmg = 4.0f;
+            if (stack.getItem() instanceof net.minecraft.world.item.TieredItem tiered) {
+                baseDmg = tiered.getTier().getAttackDamageBonus() + 4.0f;
+            }
 
-            // Потолок определяется наивысшим присутствующим металлом/кристаллом
-            float maxCeiling = 2.0f;
-            if (counts[VoxelMaterial.NETHERITE.getId()] > 0) maxCeiling = 6.0f;
-            else if (counts[VoxelMaterial.DIAMOND.getId()] > 0) maxCeiling = 5.0f;
-            else if (counts[VoxelMaterial.IRON.getId()] > 0 || counts[VoxelMaterial.OBSIDIAN.getId()] > 0) maxCeiling = 4.0f;
-            else if (counts[VoxelMaterial.COPPER.getId()] > 0) maxCeiling = 3.0f;
-
-            float metalSum = flintDmg + copperDmg + ironDmg + diamondDmg + netheriteDmg + goldDmg + obsidianDmg;
-            float materialBonus = Math.min(maxCeiling, metalSum);
-
-            // Сокрушающий бонус кинетической массы (для тяжелых топоров, кувалд и булав > 350 веса)
+            // Кинетический бонус массы (для тяжелых топоров, кувалд и двуручников > 350 веса)
             if (totalWeight > 350.0f) {
-                massBonus = Math.min(3.0f, (totalWeight - 350.0f) / 200.0f);
+                massBonus = Math.min(2.5f, (totalWeight - 350.0f) / 200.0f);
             }
 
             // Защита от "золотой зубочистки": крошечное оружие не получает кинетический бонус массы
@@ -326,7 +321,15 @@ public final class StatCalculator {
                 massBonus = 0.0f;
             }
 
-            data.damage = 2.0f + materialBonus + massBonus;
+            // Бонус инкрустации пластин высшего тира
+            float inlayDamageBonus = 0.0f;
+            if (counts[VoxelMaterial.NETHERITE.getId()] >= 60 && baseDmg < 8.0f) {
+                inlayDamageBonus = 1.0f;
+            } else if (counts[VoxelMaterial.DIAMOND.getId()] >= 60 && baseDmg < 7.0f) {
+                inlayDamageBonus = 0.8f;
+            }
+
+            data.damage = baseDmg + massBonus + inlayDamageBonus;
             data.armor = 0;
             data.armorToughness = 0;
             data.knockbackResistance = 0;

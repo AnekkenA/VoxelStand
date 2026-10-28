@@ -38,7 +38,20 @@ public final class AutoVoxelizer {
         grid.clear();
         VoxelMaterial bladeMat = detectBaseMaterial(stack);
         VoxelMaterial hiltMat = VoxelMaterial.DARK_WOOD;
-        VoxelMaterial guardMat = (bladeMat == VoxelMaterial.NETHERITE) ? VoxelMaterial.NETHERITE : VoxelMaterial.GOLD;
+        VoxelMaterial guardMat = bladeMat;
+        if (bladeMat == VoxelMaterial.OAK || bladeMat == VoxelMaterial.LIGHT_WOOD) {
+            guardMat = VoxelMaterial.DARK_WOOD;
+        } else if (bladeMat == VoxelMaterial.DEEPSLATE || bladeMat == VoxelMaterial.FLINT) {
+            guardMat = VoxelMaterial.DEEPSLATE;
+        } else if (bladeMat == VoxelMaterial.GOLD) {
+            guardMat = VoxelMaterial.GOLD;
+        } else if (bladeMat == VoxelMaterial.NETHERITE) {
+            guardMat = VoxelMaterial.NETHERITE;
+        } else if (bladeMat == VoxelMaterial.DIAMOND) {
+            guardMat = VoxelMaterial.DIAMOND;
+        } else {
+            guardMat = VoxelMaterial.IRON;
+        }
 
         byte bladeId = bladeMat.getId();
         byte hiltId = hiltMat.getId();
@@ -148,13 +161,25 @@ public final class AutoVoxelizer {
             }
         }
 
-        // Наплечники на левой и правой руке (X=10..21, Y=18..24, Z=11..20)
+        // Наплечники на левой и правой руке (контурная оболочка пластины)
         for (int y = 18; y <= 24; y++) {
             for (int x = 11; x <= 20; x++) {
-                for (int z = 11; z <= 20; z++) {
-                    leftArmGrid.set(x, y, z, matId);
-                    rightArmGrid.set(x, y, z, matId);
-                }
+                leftArmGrid.set(x, y, 11, matId);
+                leftArmGrid.set(x, y, 20, matId);
+                rightArmGrid.set(x, y, 11, matId);
+                rightArmGrid.set(x, y, 20, matId);
+            }
+            for (int z = 11; z <= 20; z++) {
+                leftArmGrid.set(11, y, z, matId);
+                leftArmGrid.set(20, y, z, matId);
+                rightArmGrid.set(11, y, z, matId);
+                rightArmGrid.set(20, y, z, matId);
+            }
+        }
+        for (int x = 11; x <= 20; x++) {
+            for (int z = 11; z <= 20; z++) {
+                leftArmGrid.set(x, 24, z, matId);
+                rightArmGrid.set(x, 24, z, matId);
             }
         }
     }
@@ -193,13 +218,26 @@ public final class AutoVoxelizer {
         rightBootGrid.clear();
         byte matId = detectBaseMaterial(stack).getId();
 
-        // Ступни и голенище: Y=0..10
-        for (int y = 0; y <= 8; y++) {
+        // Подошва: Y=0
+        for (int x = 10; x <= 21; x++) {
+            for (int z = 9; z <= 22; z++) {
+                leftBootGrid.set(x, 0, z, matId);
+                rightBootGrid.set(x, 0, z, matId);
+            }
+        }
+        // Стенки сапога: Y=1..8
+        for (int y = 1; y <= 8; y++) {
             for (int x = 10; x <= 21; x++) {
-                for (int z = 9; z <= 22; z++) {
-                    leftBootGrid.set(x, y, z, matId);
-                    rightBootGrid.set(x, y, z, matId);
-                }
+                leftBootGrid.set(x, y, 9, matId);
+                leftBootGrid.set(x, y, 22, matId);
+                rightBootGrid.set(x, y, 9, matId);
+                rightBootGrid.set(x, y, 22, matId);
+            }
+            for (int z = 9; z <= 22; z++) {
+                leftBootGrid.set(10, y, z, matId);
+                leftBootGrid.set(21, y, z, matId);
+                rightBootGrid.set(10, y, z, matId);
+                rightBootGrid.set(21, y, z, matId);
             }
         }
     }

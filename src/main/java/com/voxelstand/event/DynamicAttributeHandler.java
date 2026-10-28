@@ -55,6 +55,8 @@ public class DynamicAttributeHandler {
             return;
         }
 
+        event.clearModifiers();
+
         CompoundTag rootTag = VoxelDataHelper.getCustomData(stack);
         ItemStatData stats = ItemStatData.fromNBT(rootTag.getCompound("CustomSmithStats"));
 
@@ -77,6 +79,11 @@ public class DynamicAttributeHandler {
             if (stats.movementSpeedPenalty < 0) {
                 event.addModifier(Attributes.MOVEMENT_SPEED, new AttributeModifier(
                         SPEED_PENALTY_IDS[slotIdx], stats.movementSpeedPenalty, AttributeModifier.Operation.ADD_MULTIPLIED_BASE), slotGroup);
+            }
+        } else if (stack.getItem() instanceof net.minecraft.world.item.ShieldItem) {
+            if (!stats.isBroken && stats.knockbackResistance > 0) {
+                event.addModifier(Attributes.KNOCKBACK_RESISTANCE, new AttributeModifier(
+                        KNOCKBACK_MODIFIER_IDS[2], stats.knockbackResistance, AttributeModifier.Operation.ADD_VALUE), net.minecraft.world.entity.EquipmentSlotGroup.HAND);
             }
         } else {
             // Оружие и инструменты в главной руке
