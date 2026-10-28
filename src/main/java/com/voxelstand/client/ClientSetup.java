@@ -9,10 +9,13 @@ import com.voxelstand.client.render.VoxelDelegatingBakedModel;
 import com.voxelstand.client.render.VoxelItemRenderer;
 import com.voxelstand.item.ModItems;
 import com.voxelstand.item.PlateItem;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.*;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -72,6 +75,15 @@ public class ClientSetup {
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 return VoxelItemRenderer.INSTANCE;
+            }
+
+            @Override
+            public HumanoidModel<?> getHumanoidArmorModel(LivingEntity livingEntity, ItemStack itemStack, EquipmentSlot equipmentSlot, HumanoidModel<?> original) {
+                if (com.voxelstand.voxel.TextureVoxelizer.ensureArmorVoxelized(itemStack, equipmentSlot)) {
+                    com.voxelstand.client.render.VoxelArmorHumanoidModel.INSTANCE.setContext(itemStack, equipmentSlot);
+                    return com.voxelstand.client.render.VoxelArmorHumanoidModel.INSTANCE;
+                }
+                return original;
             }
         };
 

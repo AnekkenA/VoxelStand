@@ -20,6 +20,7 @@ public class AutoVoxelizer {
 
     public static VoxelMaterial detectBaseMaterial(ItemStack stack) {
         String name = stack.getDescriptionId().toLowerCase();
+        if (name.contains("wood")) return VoxelMaterial.OAK;
         if (name.contains("netherite")) return VoxelMaterial.NETHERITE;
         if (name.contains("diamond")) return VoxelMaterial.DIAMOND;
         if (name.contains("gold")) return VoxelMaterial.GOLD;

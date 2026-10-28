@@ -1,16 +1,20 @@
 package com.voxelstand.voxel;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.voxelstand.api.VoxelConstants;
+import com.voxelstand.api.VoxelDataHelper;
 import com.voxelstand.block.entity.SculptStandBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,7 +22,7 @@ import java.util.Optional;
  * Интеллектуальный транслятор 2D текстур предметов и текстурных разверток брони в 3D воксели.
  * - Для оружия и инструментов: считывает 2D спрайт из атласа и переносит каждый пиксель в воксели 2x2 толщиной 2 вокселя.
  * - Для брони: считывает развертку (UV map) брони (_layer_1.png и _layer_2.png) и формирует объемную оболочку.
- * - Сохраняет оригинальные материалы (алмаз, железо, дерево) и вычисляет тональное затенение по яркости пикселей.
+ * - Сохраняет оригинальные материалы (алмаз, железо, дерево) и динамически вычисляет тональное затенение по яркости пикселей.
  */
 public class TextureVoxelizer {
 
@@ -43,9 +47,11 @@ public class TextureVoxelizer {
         grid.clear();
         VoxelMaterial baseMat = AutoVoxelizer.detectBaseMaterial(stack);
 
-        // 1. Предварительный расчет средней яркости непрозрачных пикселей лезвия
-        long totalLuma = 0;
-        int nonWoodCount = 0;
+        // 1. Первый проход: вычисление диапазонов яркости (minLuma, maxLuma) отдельно для лезвия и рукояти
+        double bladeMin = 255.0, bladeMax = 0.0;
+        double woodMin = 255.0, woodMax = 0.0;
+        int bladeCount = 0;
+        int woodCount = 0;
 
         for (int py = 0; py < height; py++) {
             for (int px = 0; px < width; px++) {
@@ -56,21 +62,23 @@ public class TextureVoxelizer {
                 int r = abgr & 0xFF;
                 int g = (abgr >> 8) & 0xFF;
                 int b = (abgr >> 16) & 0xFF;
+                double luma = 0.299 * r + 0.587 * g + 0.114 * b;
 
-                if (!isWoodPixel(r, g, b)) {
-                    totalLuma += (long) (0.299 * r + 0.587 * g + 0.114 * b);
-                    nonWoodCount++;
+                if (isWoodPixel(r, g, b) && baseMat != VoxelMaterial.OAK) {
+                    woodMin = Math.min(woodMin, luma);
+                    woodMax = Math.max(woodMax, luma);
+                    woodCount++;
+                } else {
+                    bladeMin = Math.min(bladeMin, luma);
+                    bladeMax = Math.max(bladeMax, luma);
+                    bladeCount++;
                 }
             }
         }
 
-        double avgLuma = nonWoodCount > 0 ? (double) totalLuma / nonWoodCount : 128.0;
-
-        // 2. Перенос пикселей в воксельную сетку 32x32x32
-        // Спрайт обычно 16x16: масштаб 2 вокселя на пиксель
+        // 2. Второй проход: маппинг пикселей с тональным затенением
         double scaleX = 32.0 / width;
         double scaleY = 32.0 / height;
-
         int stepX = Math.max(1, (int) Math.round(scaleX));
         int stepY = Math.max(1, (int) Math.round(scaleY));
 
@@ -86,26 +94,38 @@ public class TextureVoxelizer {
                 double luma = 0.299 * r + 0.587 * g + 0.114 * b;
 
                 byte materialId;
-                if (isWoodPixel(r, g, b)) {
-                    // Деревянный хват / рукоять
-                    int tone = luma > 110 ? 1 : (luma < 60 ? 2 : 0);
+                if (isWoodPixel(r, g, b) && baseMat != VoxelMaterial.OAK) {
+                    // Деревянный хват / рукоять инструмента
+                    int tone;
+                    if (woodMax > woodMin) {
+                        double t = (luma - woodMin) / (woodMax - woodMin);
+                        if (t >= 0.65) tone = 1;
+                        else if (t >= 0.30) tone = 0;
+                        else tone = 2;
+                    } else {
+                        tone = 0;
+                    }
                     materialId = (byte) (VoxelMaterial.DARK_WOOD.getId() | (tone << 5));
                 } else {
-                    // Материал клинка / обуха с тональным затенением
+                    // Материал лезвия / обуха с адаптивным квантильным затенением
                     int tone;
-                    if (luma > avgLuma * 1.15) {
-                        tone = 1; // Блик / светлая кромка (+18%)
-                    } else if (luma < avgLuma * 0.70) {
-                        tone = 3; // Глубокая тень / контур (-32%)
-                    } else if (luma < avgLuma * 0.88) {
-                        tone = 2; // Тень (-18%)
+                    if (bladeMax > bladeMin) {
+                        double t = (luma - bladeMin) / (bladeMax - bladeMin);
+                        if (t >= 0.72) {
+                            tone = 1; // Светлый блик / острая кромка (+18%)
+                        } else if (t >= 0.45) {
+                            tone = 0; // Базовый тон металла / камня (1.0x)
+                        } else if (t >= 0.22) {
+                            tone = 2; // Тень (-18%)
+                        } else {
+                            tone = 3; // Глубокая тень / контур (-32%)
+                        }
                     } else {
-                        tone = 0; // Базовый металл
+                        tone = 0;
                     }
                     materialId = (byte) (baseMat.getId() | (tone << 5));
                 }
 
-                // Маппинг координат: py=0 (верх текстуры) соответствует vy=30 (верх сетки)
                 int startVx = (int) (px * scaleX);
                 int startVy = (int) ((height - 1 - py) * scaleY);
 
@@ -114,7 +134,7 @@ public class TextureVoxelizer {
                         int vx = startVx + dx;
                         int vy = startVy + dy;
                         if (VoxelGrid.isInBounds(vx, vy, 15)) {
-                            // Толщина лезвия 2 вокселя: Z=15 и Z=16
+                            // Толщина клинка 2 вокселя: Z=15 и Z=16
                             grid.set(vx, vy, 15, materialId);
                             grid.set(vx, vy, 16, materialId);
                         }
@@ -141,19 +161,37 @@ public class TextureVoxelizer {
         int imgW = image.getWidth();
         int imgH = image.getHeight();
 
+        // Расчет диапазона яркости для адаптивного затенения брони
+        double minLuma = 255.0, maxLuma = 0.0;
+        for (int y = 0; y < imgH; y++) {
+            for (int x = 0; x < imgW; x++) {
+                int abgr = image.getPixelRGBA(x, y);
+                int a = (abgr >> 24) & 0xFF;
+                if (a < 30) continue;
+                int r = abgr & 0xFF;
+                int g = (abgr >> 8) & 0xFF;
+                int b = (abgr >> 16) & 0xFF;
+                double luma = 0.299 * r + 0.587 * g + 0.114 * b;
+                minLuma = Math.min(minLuma, luma);
+                maxLuma = Math.max(maxLuma, luma);
+            }
+        }
+
         try {
             switch (mode) {
                 case HELMET -> {
                     VoxelGrid head = grids.computeIfAbsent("head", k -> new VoxelGrid());
                     head.clear();
-                    buildBoxFromUV(image, imgW, imgH, head, baseMat,
-                            8, 16, 8, 16, 16, 16, // x, y, z, w, h, d
-                            8, 0, 16, 0, 8, 8, 24, 8, 16, 8, 0, 8, 8); // UVs
-                    // Оверлей шлема (рога / забрало), если есть в текстуре (U+32)
+                    // Шлем: базовый куб 16x16x16 (X=8..24, Y=16..32, Z=8..24)
+                    buildArmorBox(image, imgW, imgH, head, baseMat,
+                            8, 16, 8, 16, 16, 16,
+                            0, 0, 8, 8, 8, minLuma, maxLuma);
+
+                    // Оверлей шлема (второй слой UV U=32): 18x18x18 (X=7..25, Y=15..33, Z=7..25)
                     if (imgW >= 64) {
-                        buildBoxFromUV(image, imgW, imgH, head, baseMat,
+                        buildArmorBox(image, imgW, imgH, head, baseMat,
                                 7, 15, 7, 18, 18, 18,
-                                40, 0, 48, 0, 40, 8, 56, 8, 48, 8, 32, 8, 8);
+                                32, 0, 8, 8, 8, minLuma, maxLuma);
                     }
                 }
                 case CHESTPLATE -> {
@@ -164,20 +202,20 @@ public class TextureVoxelizer {
                     leftArm.clear();
                     rightArm.clear();
 
-                    // Торс: 16x24x8
-                    buildBoxFromUV(image, imgW, imgH, body, baseMat,
-                            8, 5, 12, 16, 24, 8,
-                            20, 16, 28, 16, 20, 20, 32, 20, 28, 20, 16, 20, 4);
+                    // Торс: 16x24x8 (X=8..24, Y=4..28, Z=12..20)
+                    buildArmorBox(image, imgW, imgH, body, baseMat,
+                            8, 4, 12, 16, 24, 8,
+                            16, 16, 8, 12, 4, minLuma, maxLuma);
 
-                    // Правая рука (наплечник): 8x24x8
-                    buildBoxFromUV(image, imgW, imgH, rightArm, baseMat,
-                            12, 5, 12, 8, 24, 8,
-                            44, 16, 48, 16, 44, 20, 52, 20, 48, 20, 40, 20, 4);
+                    // Правый наплечник / рука: 8x24x8 (X=12..20, Y=4..28, Z=12..20)
+                    buildArmorBox(image, imgW, imgH, rightArm, baseMat,
+                            12, 4, 12, 8, 24, 8,
+                            40, 16, 4, 12, 4, minLuma, maxLuma);
 
-                    // Левая рука: 8x24x8
-                    buildBoxFromUV(image, imgW, imgH, leftArm, baseMat,
-                            12, 5, 12, 8, 24, 8,
-                            44, 16, 48, 16, 44, 20, 52, 20, 48, 20, 40, 20, 4);
+                    // Левый наплечник / рука: 8x24x8
+                    buildArmorBox(image, imgW, imgH, leftArm, baseMat,
+                            12, 4, 12, 8, 24, 8,
+                            40, 16, 4, 12, 4, minLuma, maxLuma);
                 }
                 case LEGGINGS -> {
                     VoxelGrid pelvis = grids.computeIfAbsent("pelvis", k -> new VoxelGrid());
@@ -187,18 +225,20 @@ public class TextureVoxelizer {
                     leftLeg.clear();
                     rightLeg.clear();
 
-                    // Пояс: 16x8x8
-                    buildBoxFromUV(image, imgW, imgH, pelvis, baseMat,
-                            8, 18, 12, 16, 8, 8,
-                            20, 16, 28, 16, 20, 20, 32, 20, 28, 20, 16, 20, 4);
+                    // Пояс: 16x8x8 (X=8..24, Y=16..24, Z=12..20)
+                    buildArmorBox(image, imgW, imgH, pelvis, baseMat,
+                            8, 16, 12, 16, 8, 8,
+                            16, 16, 8, 4, 4, minLuma, maxLuma);
 
-                    // Поножи (левая и правая нога до стола): 8x20x8
-                    buildBoxFromUV(image, imgW, imgH, rightLeg, baseMat,
-                            12, 1, 12, 8, 20, 8,
-                            4, 16, 8, 16, 4, 20, 12, 20, 8, 20, 0, 20, 4);
-                    buildBoxFromUV(image, imgW, imgH, leftLeg, baseMat,
-                            12, 1, 12, 8, 20, 8,
-                            4, 16, 8, 16, 4, 20, 12, 20, 8, 20, 0, 20, 4);
+                    // Поножи (правая нога): 8x16x8 (X=12..20, Y=0..16, Z=12..20)
+                    buildArmorBox(image, imgW, imgH, rightLeg, baseMat,
+                            12, 0, 12, 8, 16, 8,
+                            0, 16, 4, 8, 4, minLuma, maxLuma);
+
+                    // Поножи (левая нога): 8x16x8
+                    buildArmorBox(image, imgW, imgH, leftLeg, baseMat,
+                            12, 0, 12, 8, 16, 8,
+                            0, 16, 4, 8, 4, minLuma, maxLuma);
                 }
                 case BOOTS -> {
                     VoxelGrid leftBoot = grids.computeIfAbsent("left_boot", k -> new VoxelGrid());
@@ -206,13 +246,14 @@ public class TextureVoxelizer {
                     leftBoot.clear();
                     rightBoot.clear();
 
-                    // Сапоги на столешнице: 8x8x8
-                    buildBoxFromUV(image, imgW, imgH, rightBoot, baseMat,
-                            12, 1, 12, 8, 8, 8,
-                            4, 26, 8, 26, 4, 28, 12, 28, 8, 28, 0, 28, 4);
-                    buildBoxFromUV(image, imgW, imgH, leftBoot, baseMat,
-                            12, 1, 12, 8, 8, 8,
-                            4, 26, 8, 26, 4, 28, 12, 28, 8, 28, 0, 28, 4);
+                    // Сапоги на столешнице: 8x8x8 (X=12..20, Y=0..8, Z=12..20)
+                    buildArmorBox(image, imgW, imgH, rightBoot, baseMat,
+                            12, 0, 12, 8, 8, 8,
+                            0, 24, 4, 4, 4, minLuma, maxLuma);
+
+                    buildArmorBox(image, imgW, imgH, leftBoot, baseMat,
+                            12, 0, 12, 8, 8, 8,
+                            0, 24, 4, 4, 4, minLuma, maxLuma);
                 }
                 default -> {
                     return false;
@@ -225,42 +266,66 @@ public class TextureVoxelizer {
     }
 
     /**
-     * Построение объемной воксельной коробки (грани: перед, зад, бока, верх, низ) по координатам UV развертки.
+     * Построение объемной воксельной коробки брони по стандартной UV-развертке Minecraft.
      */
-    private static void buildBoxFromUV(NativeImage img, int imgW, int imgH, VoxelGrid grid, VoxelMaterial baseMat,
-                                       int x0, int y0, int z0, int w, int h, int d,
-                                       int uTop, int vTop, int uBot, int vBot,
-                                       int uFront, int vFront, int uBack, int vBack,
-                                       int uLeft, int vLeft, int uRight, int vRight, int uvStepW) {
-
+    private static void buildArmorBox(NativeImage img, int imgW, int imgH, VoxelGrid grid, VoxelMaterial baseMat,
+                                      int x0, int y0, int z0, int w, int h, int d,
+                                      int u0, int v0, int texW, int texH, int texD,
+                                      double minLuma, double maxLuma) {
         double uScale = (double) imgW / 64.0;
         double vScale = (double) imgH / 32.0;
 
-        // Передняя грань (Front: +Z)
-        samplePlane(img, grid, baseMat, x0, y0, z0 + d - 1, w, h, 1, 0, 0, 1,
-                (int) (uFront * uScale), (int) (vFront * vScale), (int) (w * 0.5 * uScale), (int) (h * 0.5 * vScale));
+        // 1. Передняя грань (Front: +Z)
+        sampleFace(img, grid, baseMat,
+                (int) ((u0 + texD) * uScale), (int) ((v0 + texD) * vScale),
+                (int) (texW * uScale), (int) (texH * vScale),
+                x0, y0, z0 + d - 1, w, h, 1,
+                FaceType.FRONT, minLuma, maxLuma);
 
-        // Задняя грань (Back: -Z)
-        samplePlane(img, grid, baseMat, x0, y0, z0, w, h, 1, 0, 0, 1,
-                (int) (uBack * uScale), (int) (vBack * vScale), (int) (w * 0.5 * uScale), (int) (h * 0.5 * vScale));
+        // 2. Задняя грань (Back: -Z)
+        sampleFace(img, grid, baseMat,
+                (int) ((u0 + 2 * texD + texW) * uScale), (int) ((v0 + texD) * vScale),
+                (int) (texW * uScale), (int) (texH * vScale),
+                x0, y0, z0, w, h, 1,
+                FaceType.BACK, minLuma, maxLuma);
 
-        // Правая грань (Right: +X)
-        samplePlane(img, grid, baseMat, x0 + w - 1, y0, z0, d, h, 0, 1, 0, 1,
-                (int) (uRight * uScale), (int) (vRight * vScale), (int) (d * 0.5 * uScale), (int) (h * 0.5 * vScale));
+        // 3. Правая грань (Right: -X)
+        sampleFace(img, grid, baseMat,
+                (int) (u0 * uScale), (int) ((v0 + texD) * vScale),
+                (int) (texD * uScale), (int) (texH * vScale),
+                x0, y0, z0, d, h, 1,
+                FaceType.RIGHT, minLuma, maxLuma);
 
-        // Левая грань (Left: -X)
-        samplePlane(img, grid, baseMat, x0, y0, z0, d, h, 0, 1, 0, 1,
-                (int) (uLeft * uScale), (int) (vLeft * vScale), (int) (d * 0.5 * uScale), (int) (h * 0.5 * vScale));
+        // 4. Левая грань (Left: +X)
+        sampleFace(img, grid, baseMat,
+                (int) ((u0 + texD + texW) * uScale), (int) ((v0 + texD) * vScale),
+                (int) (texD * uScale), (int) (texH * vScale),
+                x0 + w - 1, y0, z0, d, h, 1,
+                FaceType.LEFT, minLuma, maxLuma);
 
-        // Верхняя грань (Top: +Y)
-        samplePlane(img, grid, baseMat, x0, y0 + h - 1, z0, w, d, 1, 0, 0, 1,
-                (int) (uTop * uScale), (int) (vTop * vScale), (int) (w * 0.5 * uScale), (int) (d * 0.5 * vScale));
+        // 5. Верхняя грань (Top: +Y)
+        sampleFace(img, grid, baseMat,
+                (int) ((u0 + texD) * uScale), (int) (v0 * vScale),
+                (int) (texW * uScale), (int) (texD * vScale),
+                x0, y0 + h - 1, z0, w, d, 1,
+                FaceType.TOP, minLuma, maxLuma);
+
+        // 6. Нижняя грань (Bottom: -Y)
+        sampleFace(img, grid, baseMat,
+                (int) ((u0 + texD + texW) * uScale), (int) (v0 * vScale),
+                (int) (texW * uScale), (int) (texD * vScale),
+                x0, y0, z0, w, d, 1,
+                FaceType.BOTTOM, minLuma, maxLuma);
     }
 
-    private static void samplePlane(NativeImage img, VoxelGrid grid, VoxelMaterial baseMat,
-                                    int ox, int oy, int oz, int extentU, int extentV,
-                                    int dirU_x, int dirU_z, int dirV_x, int dirV_y,
-                                    int srcU, int srcV, int srcW, int srcH) {
+    private enum FaceType {
+        FRONT, BACK, RIGHT, LEFT, TOP, BOTTOM
+    }
+
+    private static void sampleFace(NativeImage img, VoxelGrid grid, VoxelMaterial baseMat,
+                                   int srcU, int srcV, int srcW, int srcH,
+                                   int ox, int oy, int oz, int extentU, int extentV, int thickness,
+                                   FaceType face, double minLuma, double maxLuma) {
         if (srcW <= 0 || srcH <= 0) return;
 
         for (int v = 0; v < extentV; v++) {
@@ -272,19 +337,64 @@ public class TextureVoxelizer {
 
                 int abgr = img.getPixelRGBA(px, py);
                 int alpha = (abgr >> 24) & 0xFF;
-                if (alpha < 30) continue; // Прозрачный пиксель (вырез забрала / горловины)
+                if (alpha < 30) continue; // Прозрачный вырез
 
                 int r = abgr & 0xFF;
                 int g = (abgr >> 8) & 0xFF;
                 int b = (abgr >> 16) & 0xFF;
                 double luma = 0.299 * r + 0.587 * g + 0.114 * b;
 
-                int tone = luma > 150 ? 1 : (luma < 70 ? 3 : (luma < 100 ? 2 : 0));
+                int tone;
+                if (maxLuma > minLuma) {
+                    double t = (luma - minLuma) / (maxLuma - minLuma);
+                    if (t >= 0.72) tone = 1;      // Светлый блик (+18%)
+                    else if (t >= 0.45) tone = 0; // Базовый металл
+                    else if (t >= 0.22) tone = 2; // Тень (-18%)
+                    else tone = 3;                // Глубокий контур (-32%)
+                } else {
+                    tone = 0;
+                }
                 byte val = (byte) (baseMat.getId() | (tone << 5));
 
-                int vx = ox + u * dirU_x;
-                int vy = oy + v * dirV_y;
-                int vz = oz + u * dirU_z;
+                int vx, vy, vz;
+                // В текстуре v=0 - это ВЕРХ, v=extentV-1 - это НИЗ
+                int invV = (extentV - 1 - v);
+
+                switch (face) {
+                    case FRONT -> {
+                        vx = ox + u;
+                        vy = oy + invV;
+                        vz = oz;
+                    }
+                    case BACK -> {
+                        vx = ox + (extentU - 1 - u);
+                        vy = oy + invV;
+                        vz = oz;
+                    }
+                    case RIGHT -> {
+                        vx = ox;
+                        vy = oy + invV;
+                        vz = oz + u;
+                    }
+                    case LEFT -> {
+                        vx = ox;
+                        vy = oy + invV;
+                        vz = oz + (extentU - 1 - u);
+                    }
+                    case TOP -> {
+                        vx = ox + u;
+                        vy = oy;
+                        vz = oz + invV;
+                    }
+                    case BOTTOM -> {
+                        vx = ox + u;
+                        vy = oy;
+                        vz = oz + v;
+                    }
+                    default -> {
+                        vx = ox; vy = oy; vz = oz;
+                    }
+                }
 
                 if (VoxelGrid.isInBounds(vx, vy, vz)) {
                     grid.set(vx, vy, vz, val);
@@ -293,9 +403,51 @@ public class TextureVoxelizer {
         }
     }
 
+    /**
+     * Надежный тест цвета на деревянную рукоять / палку.
+     * Древесина в Minecraft имеет золотисто-коричневые тона (r > g > b, выраженный теплый градиент).
+     * Металлы и камни нейтральны (r ≈ g ≈ b).
+     */
     private static boolean isWoodPixel(int r, int g, int b) {
-        // Определение коричневого/древесного цвета рукояти
-        return (r > 60 && g > 30 && b < 65 && r > b * 1.4 && g > b);
+        return (r > 50 && r <= 190 && g > 25 && g <= 145 && r > g && g >= b && (r - b) >= 16 && ((r - b) / (float) r) >= 0.18f);
+    }
+
+    /**
+     * Автоматическая вокселизация элемента брони, если модель еще не создана.
+     */
+    public static boolean ensureArmorVoxelized(ItemStack stack, EquipmentSlot slot) {
+        if (stack.isEmpty() || !(stack.getItem() instanceof ArmorItem)) return false;
+        if (VoxelDataHelper.hasCustomKey(stack, VoxelConstants.NBT_VOXEL_MODEL)) {
+            return true;
+        }
+
+        SculptStandBlockEntity.StandMode mode = switch (slot) {
+            case HEAD -> SculptStandBlockEntity.StandMode.HELMET;
+            case CHEST -> SculptStandBlockEntity.StandMode.CHESTPLATE;
+            case LEGS -> SculptStandBlockEntity.StandMode.LEGGINGS;
+            case FEET -> SculptStandBlockEntity.StandMode.BOOTS;
+            default -> null;
+        };
+        if (mode == null) return false;
+
+        Map<String, VoxelGrid> grids = new HashMap<>();
+        if (voxelizeArmorFromTexture(stack, mode, grids)) {
+            CompoundTag modelTag = new CompoundTag();
+            byte[] mainData = null;
+            for (Map.Entry<String, VoxelGrid> entry : grids.entrySet()) {
+                byte[] compressed = VoxelCompressor.compress(entry.getValue());
+                modelTag.putByteArray(entry.getKey(), compressed);
+                if (mainData == null) mainData = compressed;
+            }
+            CompoundTag rootTag = VoxelDataHelper.getOrCreateCustomData(stack);
+            rootTag.put(VoxelConstants.NBT_VOXEL_MODEL, modelTag);
+            if (mainData != null) {
+                rootTag.putByteArray(VoxelConstants.NBT_VOXEL_DATA, mainData);
+            }
+            VoxelDataHelper.setCustomData(stack, rootTag);
+            return true;
+        }
+        return false;
     }
 
     private static NativeImage loadArmorTextureImage(ArmorItem armor, SculptStandBlockEntity.StandMode mode) {

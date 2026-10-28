@@ -7,6 +7,7 @@ import com.voxelstand.voxel.VoxelCompressor;
 import com.voxelstand.voxel.VoxelGrid;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -25,42 +26,50 @@ import java.util.Map;
 /**
  * Рендерер кастомного воксельного слоя брони на игроке и мобах.
  * Привязывает отрендеренный меш прямо к соответствующим костям HumanoidModel.
- * Использует entityCutoutNoCull, предотвращая выворачивание полигонов при инверсии по Y.
+ * Синхронизирован со всеми анимациями игрока (бег, приседание, плавание, удары).
  */
 public class CustomArmorLayerRenderer {
     private static final Map<String, List<VoxelQuad>> MESH_CACHE = new HashMap<>();
 
-    public static void renderArmorPiece(PoseStack poseStack, MultiBufferSource bufferSource,
-                                        LivingEntity entity, EquipmentSlot slot, ItemStack stack,
-                                        HumanoidModel<?> model, int packedLight) {
+    public static void renderArmorModelToBones(PoseStack poseStack, ItemStack stack, EquipmentSlot slot,
+                                               HumanoidModel<?> model, int packedLight, int packedOverlay) {
         if (stack.isEmpty() || !com.voxelstand.api.VoxelDataHelper.hasCustomKey(stack, VoxelConstants.NBT_VOXEL_MODEL)) {
             return;
         }
 
         CompoundTag modelTag = com.voxelstand.api.VoxelDataHelper.getCustomData(stack).getCompound(VoxelConstants.NBT_VOXEL_MODEL);
+        MultiBufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
 
         switch (slot) {
-            case HEAD -> renderPartToBone(poseStack, bufferSource, modelTag, "head", model.head, 0, -0.25f, 0, packedLight);
+            case HEAD -> renderPartToBone(poseStack, bufferSource, modelTag, "head", model.head, 0, 0, 0, -0.5f, packedLight, packedOverlay);
             case CHEST -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "body", model.body, 0, 0.375f, 0, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "left_arm", model.leftArm, 0.0625f, 0.25f, 0, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "right_arm", model.rightArm, -0.0625f, 0.25f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "body", model.body, 0, 0, 0, -0.875f, packedLight, packedOverlay);
+                renderPartToBone(poseStack, bufferSource, modelTag, "left_arm", model.leftArm, 0.0625f, 0, 0, -0.75f, packedLight, packedOverlay);
+                renderPartToBone(poseStack, bufferSource, modelTag, "right_arm", model.rightArm, -0.0625f, 0, 0, -0.75f, packedLight, packedOverlay);
             }
             case LEGS -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "pelvis", model.body, 0, 0.65f, 0, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "left_leg", model.leftLeg, 0, 0.35f, 0, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "right_leg", model.rightLeg, 0, 0.35f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "pelvis", model.body, 0, 0, 0, -0.75f, packedLight, packedOverlay);
+                renderPartToBone(poseStack, bufferSource, modelTag, "left_leg", model.leftLeg, 0, 0, 0, -0.5f, packedLight, packedOverlay);
+                renderPartToBone(poseStack, bufferSource, modelTag, "right_leg", model.rightLeg, 0, 0, 0, -0.5f, packedLight, packedOverlay);
             }
             case FEET -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "left_boot", model.leftLeg, 0, 0.60f, 0, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "right_boot", model.rightLeg, 0, 0.60f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "left_boot", model.leftLeg, 0, 0, 0, -0.75f, packedLight, packedOverlay);
+                renderPartToBone(poseStack, bufferSource, modelTag, "right_boot", model.rightLeg, 0, 0, 0, -0.75f, packedLight, packedOverlay);
             }
         }
     }
 
+    public static void renderArmorPiece(PoseStack poseStack, MultiBufferSource bufferSource,
+                                        LivingEntity entity, EquipmentSlot slot, ItemStack stack,
+                                        HumanoidModel<?> model, int packedLight) {
+        // Делегирует в renderArmorModelToBones для обратной совместимости
+        renderArmorModelToBones(poseStack, stack, slot, model, packedLight, 0);
+    }
+
     private static void renderPartToBone(PoseStack poseStack, MultiBufferSource bufferSource,
                                          CompoundTag modelTag, String partName, ModelPart bone,
-                                         float offX, float offY, float offZ, int packedLight) {
+                                         float offX, float offY, float offZ, float gridOffsetY,
+                                         int packedLight, int packedOverlay) {
         if (!modelTag.contains(partName)) return;
 
         poseStack.pushPose();
@@ -68,8 +77,9 @@ public class CustomArmorLayerRenderer {
 
         poseStack.translate(offX, offY, offZ);
         // Масштаб: 32 вокселя соответствуют 16 пикселям игрока + небольшой зазор
-        poseStack.scale(0.56f, -0.56f, 0.56f);
-        poseStack.translate(-0.5, -0.5, -0.5);
+        float s = 0.53f;
+        poseStack.scale(s, -s, s);
+        poseStack.translate(-0.5f, gridOffsetY, -0.5f);
 
         byte[] data = modelTag.getByteArray(partName);
         String cacheKey = partName + "_" + java.util.Arrays.hashCode(data);
@@ -79,7 +89,7 @@ public class CustomArmorLayerRenderer {
             return GreedyMesher.mesh(grid);
         });
 
-        // Entity cutout без culling для правильного отображения фронтальных и тыльных граней
+        // Entity cutout без culling для правильного отображения граней
         VertexConsumer buffer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
         Matrix4f mat = poseStack.last().pose();
         float scale = 1.0f / 32.0f;
@@ -96,7 +106,7 @@ public class CustomArmorLayerRenderer {
 
             float r = quad.getRed(), g = quad.getGreen(), b = quad.getBlue();
             VoxelRenderHelper.renderFace(buffer, mat, x1, y1, z1, x2, y2, z2, quad.direction,
-                    r, g, b, 1.0f, light, 0);
+                    r, g, b, 1.0f, light, packedOverlay);
         }
 
         poseStack.popPose();
