@@ -1,7 +1,8 @@
-﻿{
+{
   "variants": {
-    "": {
-      "model": "voxelstand:block/sculpt_stand"
-    }
+    "facing=north": { "model": "voxelstand:block/sculpt_stand" },
+    "facing=east":  { "model": "voxelstand:block/sculpt_stand", "y": 90 },
+    "facing=south": { "model": "voxelstand:block/sculpt_stand", "y": 180 },
+    "facing=west":  { "model": "voxelstand:block/sculpt_stand", "y": 270 }
   }
 }

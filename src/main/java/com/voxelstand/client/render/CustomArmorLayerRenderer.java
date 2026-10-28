@@ -80,6 +80,10 @@ public class CustomArmorLayerRenderer {
         Matrix4f mat = poseStack.last().pose();
         float scale = 1.0f / 32.0f;
 
+        net.minecraft.client.renderer.texture.TextureAtlasSprite sprite = VoxelRenderHelper.getWhiteSprite();
+        float u0 = sprite.getU0(), u1 = sprite.getU1();
+        float v0 = sprite.getV0(), v1 = sprite.getV1();
+
         for (VoxelQuad quad : quads) {
             int light = quad.emissive ? 0xF000F0 : packedLight;
 
@@ -91,10 +95,10 @@ public class CustomArmorLayerRenderer {
             float z2 = quad.z2 * scale;
 
             float r = quad.getRed(), g = quad.getGreen(), b = quad.getBlue();
-            buffer.addVertex(mat, x1, y2, z1).setColor(r, g, b, 1.0f).setUv(0, 0).setOverlay(0).setLight(light).setNormal(0, 1, 0);
-            buffer.addVertex(mat, x1, y2, z2).setColor(r, g, b, 1.0f).setUv(0, 1).setOverlay(0).setLight(light).setNormal(0, 1, 0);
-            buffer.addVertex(mat, x2, y2, z2).setColor(r, g, b, 1.0f).setUv(1, 1).setOverlay(0).setLight(light).setNormal(0, 1, 0);
-            buffer.addVertex(mat, x2, y2, z1).setColor(r, g, b, 1.0f).setUv(1, 0).setOverlay(0).setLight(light).setNormal(0, 1, 0);
+            buffer.addVertex(mat, x1, y2, z1).setColor(r, g, b, 1.0f).setUv(u0, v0).setOverlay(0).setLight(light).setNormal(0, 1, 0);
+            buffer.addVertex(mat, x1, y2, z2).setColor(r, g, b, 1.0f).setUv(u0, v1).setOverlay(0).setLight(light).setNormal(0, 1, 0);
+            buffer.addVertex(mat, x2, y2, z2).setColor(r, g, b, 1.0f).setUv(u1, v1).setOverlay(0).setLight(light).setNormal(0, 1, 0);
+            buffer.addVertex(mat, x2, y2, z1).setColor(r, g, b, 1.0f).setUv(u1, v0).setOverlay(0).setLight(light).setNormal(0, 1, 0);
         }
 
         poseStack.popPose();

@@ -1,7 +1,8 @@
-﻿{
+{
   "variants": {
-    "": {
-      "model": "voxelstand:block/plate_crafter"
-    }
+    "facing=north": { "model": "voxelstand:block/plate_crafter" },
+    "facing=east":  { "model": "voxelstand:block/plate_crafter", "y": 90 },
+    "facing=south": { "model": "voxelstand:block/plate_crafter", "y": 180 },
+    "facing=west":  { "model": "voxelstand:block/plate_crafter", "y": 270 }
   }
 }

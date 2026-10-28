@@ -14,5 +14,8 @@ public final class ModBlocks {
     /** Единая универсальная стойка кастомизации оружия и брони */
     public static final DeferredBlock<Block> SCULPT_STAND = BLOCKS.register("sculpt_stand", () -> new SculptStandBlock());
 
+    /** Невидимый физический прокси-блок мультиблока */
+    public static final DeferredBlock<Block> STAND_PART = BLOCKS.register("stand_part", () -> new StandPartBlock());
+
     private ModBlocks() {}
 }

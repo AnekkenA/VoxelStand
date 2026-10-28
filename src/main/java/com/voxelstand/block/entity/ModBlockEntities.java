@@ -21,5 +21,10 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("plate_crafter", () ->
                     BlockEntityType.Builder.of(PlateCrafterBlockEntity::new, ModBlocks.PLATE_CRAFTER.get()).build(null));
 
+    /** BlockEntityType для прокси-блока мультиблока */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StandPartBlockEntity>> STAND_PART =
+            BLOCK_ENTITIES.register("stand_part", () ->
+                    BlockEntityType.Builder.of(StandPartBlockEntity::new, ModBlocks.STAND_PART.get()).build(null));
+
     private ModBlockEntities() {}
 }

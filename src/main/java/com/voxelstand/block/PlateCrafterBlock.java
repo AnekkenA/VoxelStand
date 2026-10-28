@@ -38,8 +38,21 @@ import org.jetbrains.annotations.Nullable;
  * - Поддерживает модовые материалы из ModdedMaterialCatalog (Create, Thermal, Mekanism, etc.)
  * - Поддерживает любые сторонние предметы с тегами #c:ingots, #c:gems, #c:raw_materials с динамическим семплированием цвета центрального пикселя!
  */
+import com.voxelstand.block.entity.StandPartBlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.BlockGetter;
+
 public class PlateCrafterBlock extends BaseEntityBlock {
     public static final com.mojang.serialization.MapCodec<PlateCrafterBlock> CODEC = simpleCodec(PlateCrafterBlock::new);
+    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
     @Override
     protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
@@ -50,6 +63,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
 
     public PlateCrafterBlock(BlockBehaviour.Properties properties) {
         super(properties);
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     public PlateCrafterBlock() {
@@ -57,6 +71,67 @@ public class PlateCrafterBlock extends BaseEntityBlock {
                 .mapColor(MapColor.WOOD)
                 .strength(2.5F)
                 .sound(SoundType.WOOD));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+        builder.add(FACING);
+    }
+
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction facing = context.getHorizontalDirection().getOpposite();
+        Direction right = facing.getClockWise();
+        BlockPos pos = context.getClickedPos();
+        Level level = context.getLevel();
+
+        BlockPos pRight = pos.relative(right);
+        if (!level.getBlockState(pRight).canBeReplaced(context)) {
+            return null;
+        }
+
+        return this.defaultBlockState().setValue(FACING, facing);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide) {
+            Direction facing = state.getValue(FACING);
+            Direction right = facing.getClockWise();
+            BlockPos pRight = pos.relative(right);
+
+            level.setBlock(pRight, ModBlocks.STAND_PART.get().defaultBlockState(), 3);
+            BlockEntity be = level.getBlockEntity(pRight);
+            if (be instanceof StandPartBlockEntity part) {
+                part.setMasterPos(pos);
+            }
+        }
+    }
+
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide) {
+            Direction facing = state.getValue(FACING);
+            Direction right = facing.getClockWise();
+            BlockPos pRight = pos.relative(right);
+            BlockState partState = level.getBlockState(pRight);
+            if (partState.is(ModBlocks.STAND_PART.get())) {
+                level.setBlock(pRight, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            }
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.block();
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.block();
     }
 
     @Nullable

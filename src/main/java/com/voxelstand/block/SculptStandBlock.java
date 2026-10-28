@@ -37,10 +37,22 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
+import com.voxelstand.block.entity.StandPartBlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.BlockGetter;
 import java.util.Map;
 
 public class SculptStandBlock extends BaseEntityBlock {
     public static final MapCodec<SculptStandBlock> CODEC = simpleCodec(SculptStandBlock::new);
+    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
@@ -49,6 +61,7 @@ public class SculptStandBlock extends BaseEntityBlock {
 
     public SculptStandBlock(BlockBehaviour.Properties properties) {
         super(properties);
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     public SculptStandBlock() {
@@ -57,6 +70,85 @@ public class SculptStandBlock extends BaseEntityBlock {
                 .strength(2.5f)
                 .sound(SoundType.WOOD)
                 .noOcclusion());
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+        builder.add(FACING);
+    }
+
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction facing = context.getHorizontalDirection().getOpposite();
+        Direction right = facing.getClockWise();
+        BlockPos pos = context.getClickedPos();
+        Level level = context.getLevel();
+
+        BlockPos pRight = pos.relative(right);
+        BlockPos pAbove = pos.above();
+        BlockPos pAboveRight = pAbove.relative(right);
+
+        if (!level.getBlockState(pRight).canBeReplaced(context) ||
+            !level.getBlockState(pAbove).canBeReplaced(context) ||
+            !level.getBlockState(pAboveRight).canBeReplaced(context)) {
+            return null;
+        }
+
+        return this.defaultBlockState().setValue(FACING, facing);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide) {
+            Direction facing = state.getValue(FACING);
+            Direction right = facing.getClockWise();
+            BlockPos pRight = pos.relative(right);
+            BlockPos pAbove = pos.above();
+            BlockPos pAboveRight = pAbove.relative(right);
+
+            setPart(level, pRight, pos);
+            setPart(level, pAbove, pos);
+            setPart(level, pAboveRight, pos);
+        }
+    }
+
+    private void setPart(Level level, BlockPos partPos, BlockPos masterPos) {
+        level.setBlock(partPos, ModBlocks.STAND_PART.get().defaultBlockState(), 3);
+        BlockEntity be = level.getBlockEntity(partPos);
+        if (be instanceof StandPartBlockEntity part) {
+            part.setMasterPos(masterPos);
+        }
+    }
+
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide) {
+            Direction facing = state.getValue(FACING);
+            Direction right = facing.getClockWise();
+            removePart(level, pos.relative(right));
+            removePart(level, pos.above());
+            removePart(level, pos.above().relative(right));
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    private void removePart(Level level, BlockPos partPos) {
+        BlockState partState = level.getBlockState(partPos);
+        if (partState.is(ModBlocks.STAND_PART.get())) {
+            level.setBlock(partPos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+        }
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.block();
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.block();
     }
 
     @Override

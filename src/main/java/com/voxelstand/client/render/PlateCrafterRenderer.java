@@ -19,6 +19,13 @@ public class PlateCrafterRenderer implements BlockEntityRenderer<PlateCrafterBlo
                        MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         poseStack.pushPose();
 
+        net.minecraft.core.Direction facing = be.getBlockState().hasProperty(com.voxelstand.block.PlateCrafterBlock.FACING) ?
+                be.getBlockState().getValue(com.voxelstand.block.PlateCrafterBlock.FACING) : net.minecraft.core.Direction.NORTH;
+
+        poseStack.translate(0.5, 0.0, 0.5);
+        poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
+        poseStack.translate(-0.5, 0.0, -0.5);
+
         // 1. Координаты пивота колеса из Blockbench модели plate_crafter.json: origin = [9, 20, 8]
         float pivotX = 9.0f / 16.0f;
         float pivotY = 20.0f / 16.0f;
@@ -58,43 +65,47 @@ public class PlateCrafterRenderer implements BlockEntityRenderer<PlateCrafterBlo
 
     private void renderBox(VertexConsumer builder, Matrix4f mat, float x1, float y1, float z1,
                            float x2, float y2, float z2, float r, float g, float b, int light, int overlay) {
+        net.minecraft.client.renderer.texture.TextureAtlasSprite sprite = VoxelRenderHelper.getWhiteSprite();
+        float u0 = sprite.getU0(), u1 = sprite.getU1();
+        float v0 = sprite.getV0(), v1 = sprite.getV1();
+
         // TOP (+Y)
-        builder.addVertex(mat, x1, y2, z1).setColor(r, g, b, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
-        builder.addVertex(mat, x1, y2, z2).setColor(r, g, b, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
-        builder.addVertex(mat, x2, y2, z2).setColor(r, g, b, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
-        builder.addVertex(mat, x2, y2, z1).setColor(r, g, b, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x1, y2, z1).setColor(r, g, b, 1.0f).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x1, y2, z2).setColor(r, g, b, 1.0f).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x2, y2, z2).setColor(r, g, b, 1.0f).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
+        builder.addVertex(mat, x2, y2, z1).setColor(r, g, b, 1.0f).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
 
         // BOTTOM (-Y)
         float rb = r * 0.6f, gb = g * 0.6f, bb = b * 0.6f;
-        builder.addVertex(mat, x1, y1, z2).setColor(rb, gb, bb, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
-        builder.addVertex(mat, x1, y1, z1).setColor(rb, gb, bb, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
-        builder.addVertex(mat, x2, y1, z1).setColor(rb, gb, bb, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
-        builder.addVertex(mat, x2, y1, z2).setColor(rb, gb, bb, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+        builder.addVertex(mat, x1, y1, z2).setColor(rb, gb, bb, 1.0f).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+        builder.addVertex(mat, x1, y1, z1).setColor(rb, gb, bb, 1.0f).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+        builder.addVertex(mat, x2, y1, z1).setColor(rb, gb, bb, 1.0f).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
+        builder.addVertex(mat, x2, y1, z2).setColor(rb, gb, bb, 1.0f).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
 
         // SIDES
         float rs = r * 0.8f, gs = g * 0.8f, bs = b * 0.8f;
         // NORTH (-Z)
-        builder.addVertex(mat, x2, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
-        builder.addVertex(mat, x1, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
-        builder.addVertex(mat, x1, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
-        builder.addVertex(mat, x2, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
+        builder.addVertex(mat, x2, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
+        builder.addVertex(mat, x1, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
+        builder.addVertex(mat, x1, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
+        builder.addVertex(mat, x2, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(0, 0, -1);
 
         // SOUTH (+Z)
-        builder.addVertex(mat, x1, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
-        builder.addVertex(mat, x2, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
-        builder.addVertex(mat, x2, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
-        builder.addVertex(mat, x1, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(mat, x1, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(mat, x2, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(mat, x2, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
+        builder.addVertex(mat, x1, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
 
         // WEST (-X)
-        builder.addVertex(mat, x1, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
-        builder.addVertex(mat, x1, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
-        builder.addVertex(mat, x1, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
-        builder.addVertex(mat, x1, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
+        builder.addVertex(mat, x1, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
+        builder.addVertex(mat, x1, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
+        builder.addVertex(mat, x1, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
+        builder.addVertex(mat, x1, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(-1, 0, 0);
 
         // EAST (+X)
-        builder.addVertex(mat, x2, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
-        builder.addVertex(mat, x2, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
-        builder.addVertex(mat, x2, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
-        builder.addVertex(mat, x2, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
+        builder.addVertex(mat, x2, y1, z2).setColor(rs, gs, bs, 1.0f).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
+        builder.addVertex(mat, x2, y1, z1).setColor(rs, gs, bs, 1.0f).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
+        builder.addVertex(mat, x2, y2, z1).setColor(rs, gs, bs, 1.0f).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
+        builder.addVertex(mat, x2, y2, z2).setColor(rs, gs, bs, 1.0f).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(1, 0, 0);
     }
 }
