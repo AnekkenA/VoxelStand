@@ -63,28 +63,50 @@ public class CustomItemRenderer {
 
         poseStack.pushPose();
 
+        boolean isArmor = customData.contains(VoxelConstants.NBT_VOXEL_MODEL);
+
         // 1. Позиционирование и поворот в зависимости от контекста отображения
         if (context == ItemDisplayContext.GUI) {
-            // Изометрический 3D-рендер в слоте инвентаря/хотбара
             poseStack.translate(0.5, 0.5, 0.5);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0f));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0f));
-            poseStack.mulPose(Axis.ZP.rotationDegrees(-25.0f));
-            poseStack.scale(0.65f, 0.65f, 0.65f);
+            if (isArmor) {
+                // Броня в слоте инвентаря: развернута передом к игроку
+                poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
+                poseStack.scale(0.7f, 0.7f, 0.7f);
+            } else {
+                // Оружие и инструменты в слоте инвентаря: абсолютно аутентичное плоское 2D отображение
+                poseStack.scale(0.95f, 0.95f, 0.95f);
+            }
         } else if (context == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND || context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND) {
-            // От первого лица
-            poseStack.translate(0.5, 0.1, 0.5);
-            poseStack.mulPose(Axis.XP.rotationDegrees(-15.0f));
+            // От первого лица: стандартный боевой наклон оружия вперед
+            poseStack.translate(0.5, 0.2, 0.5);
+            if (!isArmor) {
+                poseStack.mulPose(Axis.YP.rotationDegrees(-90.0f));
+                poseStack.mulPose(Axis.ZP.rotationDegrees(25.0f));
+            } else {
+                poseStack.mulPose(Axis.XP.rotationDegrees(-15.0f));
+            }
             poseStack.scale(0.85f, 0.85f, 0.85f);
         } else if (context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
-            // В руке от третьего лица
-            poseStack.translate(0.5, 0.1, 0.5);
-            poseStack.mulPose(Axis.XP.rotationDegrees(-15.0f));
-            poseStack.scale(0.75f, 0.75f, 0.75f);
+            // В руке от третьего лица: хват меча / инструмента
+            poseStack.translate(0.5, 0.25, 0.5);
+            if (!isArmor) {
+                poseStack.mulPose(Axis.YP.rotationDegrees(-90.0f));
+                poseStack.mulPose(Axis.ZP.rotationDegrees(55.0f));
+            } else {
+                poseStack.mulPose(Axis.XP.rotationDegrees(-15.0f));
+            }
+            poseStack.scale(0.8f, 0.8f, 0.8f);
+        } else if (context == ItemDisplayContext.GROUND) {
+            // На земле (выброшенный предмет лежит плоско)
+            poseStack.translate(0.5, 0.05, 0.5);
+            if (!isArmor) {
+                poseStack.mulPose(Axis.XP.rotationDegrees(90.0f));
+            }
+            poseStack.scale(0.65f, 0.65f, 0.65f);
         } else {
-            // На земле (выброшенный предмет) и в рамках
-            poseStack.translate(0.5, 0.1, 0.5);
-            poseStack.scale(0.75f, 0.75f, 0.75f);
+            // Рамки и прочее
+            poseStack.translate(0.5, 0.5, 0.5);
+            poseStack.scale(0.8f, 0.8f, 0.8f);
         }
 
         // Применение свободной позы удержания и вращения предмета в руке

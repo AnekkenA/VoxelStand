@@ -88,8 +88,9 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
 
             if (mode == SculptStandBlockEntity.StandMode.WEAPON) {
                 // Оружие лежит горизонтально поперек двух люлек стола
-                poseStack.translate(0.0, 0.1125, 0.0);
-                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90.0f));
+                poseStack.translate(0.0, 0.12, 0.0);
+                float rotZ = isWeaponDiagonal(grid) ? -45.0f : -90.0f;
+                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(rotZ));
                 poseStack.translate(0.0, -0.5, 0.0);
 
                 if (stand.getCurrentPose() != null && stand.getCurrentPose().itemRotY != 0.0f) {
@@ -154,8 +155,9 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
             poseStack.pushPose();
 
             if (mode == SculptStandBlockEntity.StandMode.WEAPON) {
-                poseStack.translate(0.0, 0.1125, 0.0);
-                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90.0f));
+                poseStack.translate(0.0, 0.12, 0.0);
+                float rotZ = isWeaponDiagonal(grid) ? -45.0f : -90.0f;
+                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(rotZ));
                 poseStack.translate(0.0, -0.5, 0.0);
             }
 
@@ -179,6 +181,24 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
 
             poseStack.popPose();
         }
+    }
+
+    private static boolean isWeaponDiagonal(VoxelGrid grid) {
+        if (grid == null) return false;
+        int minX = 32, maxX = -1, minY = 32, maxY = -1;
+        for (int y = 0; y < 32; y++) {
+            for (int x = 0; x < 32; x++) {
+                for (int z = 0; z < 32; z++) {
+                    if (grid.get(x, y, z) != 0) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+        }
+        return (maxX - minX > 8) && (maxY - minY > 8);
     }
 
     private void renderSymmetryLine(PoseStack poseStack, MultiBufferSource bufferSource) {

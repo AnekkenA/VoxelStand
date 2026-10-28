@@ -279,7 +279,7 @@ public class SculptStandBlock extends BaseEntityBlock {
         }
 
         // =========================================================================
-        // 2. ИНФОРМАЦИЯ / НАСТРОЙКА ПОЗЫ: Обычный ПКМ пустой рукой
+        // 2. ИНФОРМАЦИЯ / СМЕНА РЕЖИМА / НАСТРОЙКА ПОЗЫ: Обычный ПКМ пустой рукой
         // =========================================================================
         if (held.isEmpty() && stand.getMode() != SculptStandBlockEntity.StandMode.EMPTY) {
             if (!level.isClientSide) {
@@ -287,24 +287,35 @@ public class SculptStandBlock extends BaseEntityBlock {
                     stand.cyclePoseRotation();
                     level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 0.7f, 1.2f);
                 } else {
-                    level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.3f, 1.8f);
+                    stand.toggleCosmeticMode();
+                    if (stand.isCosmeticMode()) {
+                        player.displayClientMessage(Component.literal("§b[Режим: Косметика] Внешний вид изменится, а все характеристики и чары останутся оригинальными!"), true);
+                    } else {
+                        player.displayClientMessage(Component.literal("§6[Режим: Ковка] Включен полный расчет характеристик, веса и баланса!"), true);
+                    }
+                    level.playSound(null, pos, SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.BLOCKS, 0.7f, 1.5f);
                 }
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
         // =========================================================================
-        // 3. УСТАНОВКА НОВОГО ПРЕДМЕТА: ПКМ с оружием или броней
+        // 3. УСТАНОВКА НОВОГО ПРЕДМЕТА: ПКМ (с авто-каркасом) или Shift + ПКМ (с нуля)
         // =========================================================================
         if (stand.getMode() == SculptStandBlockEntity.StandMode.EMPTY && !held.isEmpty()) {
             if (!(held.getItem() instanceof ChiselItem) && !(held.getItem() instanceof PlateItem)) {
                 ItemStack candidate = held.copyWithCount(1);
                 if (stand.canAcceptItem(candidate)) {
-                    if (stand.setItem(candidate)) {
+                    boolean startFromScratch = player.isShiftKeyDown();
+                    if (stand.setItem(candidate, startFromScratch)) {
                         held.shrink(1);
                         if (!level.isClientSide) {
                             level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.BLOCKS, 0.8f, 1.0f);
-                            player.displayClientMessage(Component.literal("§aПредмет установлен на стапель. Каркас сформирован!"), true);
+                            if (startFromScratch) {
+                                player.displayClientMessage(Component.literal("§e[Кузница] Предмет установлен! Сетка пуста — моделирование с нуля."), true);
+                            } else {
+                                player.displayClientMessage(Component.literal("§a[Кузница] Предмет установлен! Каркас сформирован по текстуре предмета."), true);
+                            }
                         }
                         return InteractionResult.sidedSuccess(level.isClientSide);
                     }
@@ -452,6 +463,14 @@ public class SculptStandBlock extends BaseEntityBlock {
                 if (!level.isClientSide) {
                     if (stand.isPoseCustomizationOnly()) {
                         player.displayClientMessage(Component.literal("§c[Кузница] Форма предмета запечатана! Изменение вокселей невозможно."), true);
+                        return;
+                    }
+
+                    if (player.isShiftKeyDown()) {
+                        // Shift + ЛКМ долотом: полная очистка сетки для моделирования с нуля!
+                        stand.clearGrids();
+                        player.displayClientMessage(Component.literal("§c[Сетка очищена] Все воксели сброшены. Моделирование с нуля!"), true);
+                        level.playSound(null, pos, SoundEvents.ANVIL_BREAK, SoundSource.BLOCKS, 0.7f, 1.5f);
                         return;
                     }
 

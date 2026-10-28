@@ -42,10 +42,30 @@ public class SculptStandBlockEntity extends BlockEntity {
     private ItemStack heldItem = ItemStack.EMPTY;
     private final Map<String, VoxelGrid> grids = new HashMap<>();
     private boolean symmetryMode = true;
-    private int guideMode = 0; // 0 = РЎРѕР»РѕРјР°, 1 = РљР°СЂРєР°СЃ Рё РІРµСЂРµРІРєРё, 2 = РЎРєСЂС‹С‚
+    private int guideMode = 0; // 0 = Солома, 1 = Каркас и веревки, 2 = Скрыт
     private long lastFinalizeAttempt = 0;
     private boolean isPoseCustomizationOnly = false;
+    private boolean isCosmeticMode = false;
     private ItemPoseData currentPose = new ItemPoseData();
+
+    public boolean isCosmeticMode() {
+        return isCosmeticMode;
+    }
+
+    public void setCosmeticMode(boolean cosmetic) {
+        this.isCosmeticMode = cosmetic;
+        setChanged();
+    }
+
+    public void toggleCosmeticMode() {
+        this.isCosmeticMode = !this.isCosmeticMode;
+        setChanged();
+    }
+
+    public void clearGrids() {
+        this.grids.clear();
+        setChanged();
+    }
 
     // РўСЂРµРєРёРЅРі РєР°С‡РµСЃС‚РІР° РІР»РѕР¶РµРЅРЅС‹С… РїР»Р°СЃС‚РёРЅ (Normal, Sturdy, Pure)
     private int platesNormal = 0;
@@ -222,6 +242,10 @@ public class SculptStandBlockEntity extends BlockEntity {
     }
 
     public boolean setItem(ItemStack stack) {
+        return setItem(stack, false);
+    }
+
+    public boolean setItem(ItemStack stack, boolean startFromScratch) {
         if (!canAcceptItem(stack)) return false;
 
         boolean isAlreadyForged = com.voxelstand.api.VoxelDataHelper.hasCustomKey(stack, "CustomSmithForged") 
@@ -233,6 +257,7 @@ public class SculptStandBlockEntity extends BlockEntity {
         this.mode = detectedMode;
         this.grids.clear();
         this.isPoseCustomizationOnly = isAlreadyForged;
+        this.isCosmeticMode = com.voxelstand.VoxelStandConfig.CONFIG.defaultCosmeticMode.get();
 
         if (isAlreadyForged) {
             // Загрузка сохраненных вокселей без изменения геометрии и статов
@@ -245,8 +270,25 @@ public class SculptStandBlockEntity extends BlockEntity {
             }
         } else {
             this.currentPose = new ItemPoseData();
-            // Автовокселизация базового каркаса
-            applyAutoVoxelization(this.heldItem);
+            boolean scratch = startFromScratch || com.voxelstand.VoxelStandConfig.CONFIG.defaultSculptFromScratch.get();
+            if (!scratch) {
+                // Автовокселизация: сначала пробуем прямо по 2D текстуре/развертке, если включено в конфиге
+                boolean textureLoaded = false;
+                if (com.voxelstand.VoxelStandConfig.CONFIG.enableTextureVoxelization.get()) {
+                    try {
+                        if (mode == StandMode.WEAPON) {
+                            textureLoaded = TextureVoxelizer.voxelizeWeaponFromTexture(this.heldItem, getGrid("weapon"));
+                        } else if (this.heldItem.getItem() instanceof ArmorItem) {
+                            textureLoaded = TextureVoxelizer.voxelizeArmorFromTexture(this.heldItem, this.mode, this.grids);
+                        }
+                    } catch (Throwable t) {
+                        textureLoaded = false;
+                    }
+                }
+                if (!textureLoaded) {
+                    applyAutoVoxelization(this.heldItem);
+                }
+            }
         }
 
         setChanged();
@@ -359,12 +401,9 @@ public class SculptStandBlockEntity extends BlockEntity {
             return ItemStack.EMPTY;
         }
 
-        float qualityMultiplier = calculateQualityMultiplier();
-        String qualityName = getQualityName();
-        boolean isArmor = heldItem.getItem() instanceof ArmorItem;
-        ItemStatData stats = StatCalculator.calculate(grids, isArmor, heldItem, qualityMultiplier);
+        boolean isCosmetic = this.isCosmeticMode || !com.voxelstand.VoxelStandConfig.CONFIG.enableStatCalculation.get();
 
-        // 1. РЎРѕС…СЂР°РЅРµРЅРёРµ РІРѕРєСЃРµР»РµР№ РґР»СЏ 3D СЂРµРЅРґРµСЂР°
+        // 1. Сохранение вокселей для 3D рендера (всегда сохраняется, чтобы модель была воксельной!)
         if (mode == StandMode.WEAPON) {
             VoxelGrid g = grids.get("weapon");
             if (g != null && g.getNonEmptyCount() > 0) {
@@ -388,33 +427,45 @@ public class SculptStandBlockEntity extends BlockEntity {
             }
         }
 
-        // 2. Р—Р°РїРёСЃСЊ RPG-С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРє Рё РєР°С‡РµСЃС‚РІР°
-        rootTag.put("CustomSmithStats", stats.toNBT());
         rootTag.putBoolean("CustomSmithForged", true);
         rootTag.putBoolean("CustomSmithBaked", true);
-        rootTag.putDouble("totalWeight", stats.weight);
-        rootTag.putDouble("attackSpeed", stats.attackSpeed);
-        rootTag.putString("weightClass", stats.weightClass.name());
-        rootTag.putFloat("QualityModifier", qualityMultiplier);
-        rootTag.putString("QualityName", qualityName);
-        rootTag.putInt("PlatesNormal", platesNormal);
-        rootTag.putInt("PlatesSturdy", platesSturdy);
-        rootTag.putInt("PlatesPure", platesPure);
 
-        // 3. Р—Р°РїРёСЃСЊ РІС‹С‡РёСЃР»РµРЅРЅС‹С… РІР°РЅРёР»СЊРЅС‹С… Р·Р°С‡Р°СЂРѕРІР°РЅРёР№
-        if (this.level != null) {
-            var lookup = this.level.registryAccess().lookup(Registries.ENCHANTMENT);
-            if (lookup.isPresent()) {
-                for (Map.Entry<ResourceLocation, Integer> entry : stats.enchantments.entrySet()) {
-                    var enchHolder = lookup.get().get(ResourceKey.create(Registries.ENCHANTMENT, entry.getKey()));
-                    enchHolder.ifPresent(holder -> result.enchant(holder, entry.getValue()));
+        if (isCosmetic) {
+            // КОСМЕТИЧЕСКИЙ РЕЖИМ (Трансмогрификация):
+            // Внешний 3D вид меняется, но оригинальные статы, броня, урон и чары остаются 100% ванильными!
+            rootTag.putBoolean("CustomSmithCosmetic", true);
+        } else {
+            // БОЕВОЙ РЕЖИМ (Ковка с перерасчетом характеристик):
+            float qualityMultiplier = calculateQualityMultiplier();
+            String qualityName = getQualityName();
+            boolean isArmor = heldItem.getItem() instanceof ArmorItem;
+            ItemStatData stats = StatCalculator.calculate(grids, isArmor, heldItem, qualityMultiplier);
+
+            rootTag.put("CustomSmithStats", stats.toNBT());
+            rootTag.putDouble("totalWeight", stats.weight);
+            rootTag.putDouble("attackSpeed", stats.attackSpeed);
+            rootTag.putString("weightClass", stats.weightClass.name());
+            rootTag.putFloat("QualityModifier", qualityMultiplier);
+            rootTag.putString("QualityName", qualityName);
+            rootTag.putInt("PlatesNormal", platesNormal);
+            rootTag.putInt("PlatesSturdy", platesSturdy);
+            rootTag.putInt("PlatesPure", platesPure);
+
+            // Начисление чар от материалов только если разрешено в конфиге!
+            if (com.voxelstand.VoxelStandConfig.CONFIG.enableMaterialEnchantments.get() && this.level != null) {
+                var lookup = this.level.registryAccess().lookup(Registries.ENCHANTMENT);
+                if (lookup.isPresent()) {
+                    for (Map.Entry<ResourceLocation, Integer> entry : stats.enchantments.entrySet()) {
+                        var enchHolder = lookup.get().get(ResourceKey.create(Registries.ENCHANTMENT, entry.getKey()));
+                        enchHolder.ifPresent(holder -> result.enchant(holder, entry.getValue()));
+                    }
                 }
             }
         }
 
-        // 4. Р—Р°РїРёСЃСЊ РїРѕР·С‹ (СѓРјРЅР°СЏ СЂРµРєРѕРјРµРЅРґР°С†РёСЏ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ)
+        // Запись позы
         if (currentPose == null || (currentPose.armPitch == 0 && currentPose.itemRotY == 0 && !currentPose.twoHanded)) {
-            currentPose = ItemPoseData.createDefault(stats.totalWeight, heldItem.getItem() instanceof ShieldItem);
+            currentPose = ItemPoseData.createDefault(0.0f, heldItem.getItem() instanceof ShieldItem);
         }
         rootTag.put(VoxelConstants.NBT_POSE_DATA, currentPose.toNbt());
         com.voxelstand.api.VoxelDataHelper.setCustomData(result, rootTag);
@@ -457,6 +508,7 @@ public class SculptStandBlockEntity extends BlockEntity {
         tag.putBoolean("SymmetryMode", symmetryMode);
         tag.putInt("GuideMode", guideMode);
         tag.putBoolean("IsPoseOnly", isPoseCustomizationOnly);
+        tag.putBoolean("IsCosmeticMode", isCosmeticMode);
         tag.put("CurrentPose", currentPose.toNbt());
 
         tag.putInt("PlatesNormal", platesNormal);
@@ -506,6 +558,7 @@ public class SculptStandBlockEntity extends BlockEntity {
         this.symmetryMode = tag.getBoolean("SymmetryMode");
         this.guideMode = tag.getInt("GuideMode");
         this.isPoseCustomizationOnly = tag.getBoolean("IsPoseOnly");
+        this.isCosmeticMode = tag.getBoolean("IsCosmeticMode");
         this.currentPose = tag.contains("CurrentPose") ? ItemPoseData.fromNbt(tag.getCompound("CurrentPose")) : new ItemPoseData();
 
         this.platesNormal = tag.getInt("PlatesNormal");

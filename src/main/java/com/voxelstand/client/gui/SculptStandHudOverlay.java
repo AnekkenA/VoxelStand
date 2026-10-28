@@ -52,9 +52,9 @@ public class SculptStandHudOverlay implements LayeredDraw.Layer {
         int screenHeight = graphics.guiHeight();
 
         // Позиционирование карточки в правом верхнем углу
-        int cardWidth = 195;
-        int lineCount = 7;
-        int cardHeight = 22 + (lineCount * 11);
+        int cardWidth = 205;
+        int lineCount = 8;
+        int cardHeight = 26 + (lineCount * 11);
         int cardX = screenWidth - cardWidth - 12;
         int cardY = 12;
 
@@ -65,10 +65,18 @@ public class SculptStandHudOverlay implements LayeredDraw.Layer {
         int textX = cardX + 8;
         int textY = cardY + 7;
 
-        // 1. Заголовок предмета
+        // 1. Заголовок предмета и режим работы
         String itemName = held.getHoverName().getString();
         if (itemName.length() > 22) itemName = itemName.substring(0, 20) + "..";
         graphics.drawString(font, "✦ §e" + itemName, textX, textY, 0xFFFFFF, true);
+        textY += 11;
+
+        boolean cosmetic = stand.isCosmeticMode() || !com.voxelstand.VoxelStandConfig.CONFIG.enableStatCalculation.get();
+        if (cosmetic) {
+            graphics.drawString(font, "§b[Режим: Косметика] §7(Статы сохранены)", textX, textY, 0x55FFFF, true);
+        } else {
+            graphics.drawString(font, "§6[Режим: Ковка] §7(Перерасчет статов)", textX, textY, 0xFFA500, true);
+        }
         textY += 12;
 
         // 2. Лимит вокселей и шкала прогресса
@@ -133,5 +141,8 @@ public class SculptStandHudOverlay implements LayeredDraw.Layer {
                     stats.maxDurability, stats.miningTier);
             graphics.drawString(font, durStr, textX, textY, 0xFFFFFF, true);
         }
+
+        textY += 13;
+        graphics.drawString(font, "§8[ПКМ рукой: Режим | Shift: Снять]", textX, textY, 0x888888, false);
     }
 }
