@@ -1,5 +1,5 @@
 {
-  "parent": "voxelstand:block/sculpt_stand",
+  "parent": "voxelstand:block/sculpt_stand_empty",
   "display": {
     "gui": {
       "rotation": [ 30, 225, 0 ],

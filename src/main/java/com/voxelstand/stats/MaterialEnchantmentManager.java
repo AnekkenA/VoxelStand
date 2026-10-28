@@ -1,6 +1,7 @@
 package com.voxelstand.stats;
 
 import com.voxelstand.voxel.VoxelMaterial;
+import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.Enchantments;
 
 /**
@@ -11,8 +12,8 @@ import net.minecraft.world.item.enchantment.Enchantments;
 public final class MaterialEnchantmentManager {
     private MaterialEnchantmentManager() {}
 
-    public static void applyEnchantments(int[] counts, ItemStatData data, net.minecraft.world.item.ItemStack stack) {
-        if (stack.getItem() instanceof net.minecraft.world.item.BowItem) {
+    public static void applyEnchantments(int[] counts, ItemStatData data, ItemStack stack) {
+        if (stack.getItem() instanceof BowItem) {
             // Лук: Пламя (Ифрит), Бесконечность (Лазурит), Сила (Кварц), Починка (Осколок эха)
             int blaze = counts[VoxelMaterial.BLAZE.getId()];
             if (blaze >= 15) data.enchantments.put(Enchantments.FLAME.location(), 1);
@@ -30,7 +31,7 @@ public final class MaterialEnchantmentManager {
             return;
         }
 
-        if (stack.getItem() instanceof net.minecraft.world.item.CrossbowItem) {
+        if (stack.getItem() instanceof CrossbowItem) {
             // Арбалет: Пронзающая стрела (Шалкер), Быстрая перезарядка (Редстоун), Тройной выстрел (Кварц), Починка
             int shulker = counts[VoxelMaterial.SHULKER.getId()];
             int pierceLvl = Math.min(4, shulker / 25);
@@ -49,7 +50,7 @@ public final class MaterialEnchantmentManager {
             return;
         }
 
-        if (stack.getItem() instanceof net.minecraft.world.item.ShieldItem) {
+        if (stack.getItem() instanceof ShieldItem) {
             // Щит: Шипы (Аметист), Прочность (Обсидиан), Починка (Осколок эха)
             int amethyst = counts[VoxelMaterial.AMETHYST.getId()];
             int thornsLvl = Math.min(3, amethyst / 20);
@@ -65,37 +66,50 @@ public final class MaterialEnchantmentManager {
             return;
         }
 
-        boolean isArmor = stack.getItem() instanceof net.minecraft.world.item.ArmorItem;
-        applyEnchantments(counts, data, isArmor);
+        boolean isArmor = stack.getItem() instanceof ArmorItem;
+        boolean isSword = stack.getItem() instanceof SwordItem;
+        boolean isTool = stack.getItem() instanceof DiggerItem;
+
+        applyEnchantments(counts, data, isArmor, isSword, isTool);
     }
 
     public static void applyEnchantments(int[] counts, ItemStatData data, boolean isArmor) {
+        applyEnchantments(counts, data, isArmor, !isArmor, false);
+    }
+
+    public static void applyEnchantments(int[] counts, ItemStatData data, boolean isArmor, boolean isSword, boolean isTool) {
         // 1. Огонь (Стержень ифрита: BLAZE)
         int blaze = counts[VoxelMaterial.BLAZE.getId()];
         if (blaze >= 30) {
             if (isArmor) data.enchantments.put(Enchantments.FIRE_PROTECTION.location(), 2);
-            else data.enchantments.put(Enchantments.FIRE_ASPECT.location(), 2);
+            else if (isSword) data.enchantments.put(Enchantments.FIRE_ASPECT.location(), 2);
         } else if (blaze >= 15) {
             if (isArmor) data.enchantments.put(Enchantments.FIRE_PROTECTION.location(), 1);
-            else data.enchantments.put(Enchantments.FIRE_ASPECT.location(), 1);
+            else if (isSword) data.enchantments.put(Enchantments.FIRE_ASPECT.location(), 1);
         }
 
         // 2. Удача / Добыча (Лазурит: LAPIS)
         int lapis = counts[VoxelMaterial.LAPIS.getId()];
         if (lapis >= 60) {
-            if (!isArmor) data.enchantments.put(Enchantments.FORTUNE.location(), 3);
+            if (isSword) data.enchantments.put(Enchantments.LOOTING.location(), 3);
+            else if (isTool) data.enchantments.put(Enchantments.FORTUNE.location(), 3);
         } else if (lapis >= 40) {
-            if (!isArmor) data.enchantments.put(Enchantments.FORTUNE.location(), 2);
+            if (isSword) data.enchantments.put(Enchantments.LOOTING.location(), 2);
+            else if (isTool) data.enchantments.put(Enchantments.FORTUNE.location(), 2);
         } else if (lapis >= 20) {
-            if (!isArmor) data.enchantments.put(Enchantments.FORTUNE.location(), 1);
+            if (isSword) data.enchantments.put(Enchantments.LOOTING.location(), 1);
+            else if (isTool) data.enchantments.put(Enchantments.FORTUNE.location(), 1);
         }
 
         // 3. Заточка / Эффективность (Кварц: QUARTZ)
         int quartz = counts[VoxelMaterial.QUARTZ.getId()];
         int quartzLevel = Math.min(5, quartz / 25);
-        if (quartzLevel > 0 && !isArmor) {
-            data.enchantments.put(Enchantments.SHARPNESS.location(), quartzLevel);
-            data.enchantments.put(Enchantments.EFFICIENCY.location(), quartzLevel);
+        if (quartzLevel > 0) {
+            if (isSword) {
+                data.enchantments.put(Enchantments.SHARPNESS.location(), quartzLevel);
+            } else if (isTool) {
+                data.enchantments.put(Enchantments.EFFICIENCY.location(), quartzLevel);
+            }
         }
 
         // 4. Взрывоустойчивость (Обсидиан: OBSIDIAN)
@@ -107,7 +121,7 @@ public final class MaterialEnchantmentManager {
         int shulker = counts[VoxelMaterial.SHULKER.getId()];
         if (shulker >= 25) {
             if (isArmor) data.enchantments.put(Enchantments.PROJECTILE_PROTECTION.location(), 2);
-            else data.enchantments.put(Enchantments.SILK_TOUCH.location(), 1);
+            else if (isTool) data.enchantments.put(Enchantments.SILK_TOUCH.location(), 1);
         }
 
         // 6. Шипы (Осколок аметиста: AMETHYST)

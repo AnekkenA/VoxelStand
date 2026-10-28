@@ -11,7 +11,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import org.joml.Matrix4f;
 
@@ -61,16 +60,22 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
         for (Map.Entry<String, VoxelGrid> entry : stand.getAllGrids().entrySet()) {
             String part = entry.getKey();
             VoxelGrid grid = entry.getValue();
-            if (grid.getNonEmptyCount() == 0) continue;
+            if (grid == null || grid.getNonEmptyCount() == 0) continue;
 
             poseStack.pushPose();
 
-            // Динамический поворот оружия при настройке позы
-            if (mode == SculptStandBlockEntity.StandMode.WEAPON && stand.getCurrentPose() != null && stand.getCurrentPose().itemRotY != 0.0f) {
-                poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(stand.getCurrentPose().itemRotY));
+            if (mode == SculptStandBlockEntity.StandMode.WEAPON) {
+                // Оружие лежит горизонтально поперек двух опор стола
+                poseStack.translate(0.0, 0.16, 0.0);
+                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90.0f));
+                poseStack.translate(0.0, -0.5, 0.0);
+
+                if (stand.getCurrentPose() != null && stand.getCurrentPose().itemRotY != 0.0f) {
+                    poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(stand.getCurrentPose().itemRotY));
+                }
             }
 
-            // Динамический сдвиг для взрыв-схемы
+            // Динамический сдвиг для брони и взрыв-схемы
             applyPartTransform(poseStack, part, stand.getPartOffset(part));
 
             List<VoxelQuad> quads = GreedyMesher.mesh(grid);
@@ -88,7 +93,8 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
                 float y2 = quad.y2 * scale;
                 float z2 = (quad.z2 - 16) * scale;
 
-                renderFace(solidBuffer, mat, x1, y1, z1, x2, y2, z2, quad, quadLight, overlay, 1.0f);
+                VoxelRenderHelper.renderFace(solidBuffer, mat, x1, y1, z1, x2, y2, z2, quad.direction,
+                        quad.getRed(), quad.getGreen(), quad.getBlue(), 1.0f, quadLight, overlay);
             }
 
             poseStack.popPose();
@@ -96,7 +102,12 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
     }
 
     private void applyPartTransform(PoseStack poseStack, String part, float offset) {
-        if (part.contains("left")) {
+        float baseArmShift = 0.35f;
+        if (part.contains("left_arm") || part.contains("left_leg") || part.contains("left_boot")) {
+            poseStack.translate(-baseArmShift + offset, 0, 0);
+        } else if (part.contains("right_arm") || part.contains("right_leg") || part.contains("right_boot")) {
+            poseStack.translate(baseArmShift - offset, 0, 0);
+        } else if (part.contains("left")) {
             poseStack.translate(offset, 0, 0);
         } else if (part.contains("right")) {
             poseStack.translate(-offset, 0, 0);
@@ -115,6 +126,13 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
 
             List<VoxelQuad> quads = GreedyMesher.mesh(grid);
             poseStack.pushPose();
+
+            if (mode == SculptStandBlockEntity.StandMode.WEAPON) {
+                poseStack.translate(0.0, 0.16, 0.0);
+                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90.0f));
+                poseStack.translate(0.0, -0.5, 0.0);
+            }
+
             applyPartTransform(poseStack, part, stand.getPartOffset(part));
             Matrix4f mat = poseStack.last().pose();
 
@@ -127,42 +145,11 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
                 float y2 = quad.y2 * scale;
                 float z2 = (quad.z2 - 16) * scale;
 
-                // Прозрачность 0.7f по ТЗ, легкое свечение для четкой видимости чертежа
-                renderFace(translucentBuffer, mat, x1, y1, z1, x2, y2, z2, quad, 0xF000F0, overlay, 0.7f);
+                VoxelRenderHelper.renderFace(translucentBuffer, mat, x1, y1, z1, x2, y2, z2, quad.direction,
+                        quad.getRed(), quad.getGreen(), quad.getBlue(), 0.7f, 0xF000F0, overlay);
             }
 
             poseStack.popPose();
-        }
-    }
-
-    private void renderFace(VertexConsumer builder, Matrix4f mat, float x1, float y1, float z1,
-                            float x2, float y2, float z2, VoxelQuad quad, int light, int overlay, float alpha) {
-        float r = quad.getRed(), g = quad.getGreen(), b = quad.getBlue();
-        TextureAtlasSprite sprite = VoxelRenderHelper.getWhiteSprite();
-        float u0 = sprite.getU0(), u1 = sprite.getU1();
-        float v0 = sprite.getV0(), v1 = sprite.getV1();
-
-        switch (quad.direction) {
-            case UP -> {
-                builder.addVertex(mat, x1, y2, z1).setColor(r, g, b, alpha).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
-                builder.addVertex(mat, x1, y2, z2).setColor(r, g, b, alpha).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
-                builder.addVertex(mat, x2, y2, z2).setColor(r, g, b, alpha).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
-                builder.addVertex(mat, x2, y2, z1).setColor(r, g, b, alpha).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);
-            }
-            case DOWN -> {
-                float dr = r * 0.6f, dg = g * 0.6f, db = b * 0.6f;
-                builder.addVertex(mat, x1, y1, z2).setColor(dr, dg, db, alpha).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
-                builder.addVertex(mat, x1, y1, z1).setColor(dr, dg, db, alpha).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
-                builder.addVertex(mat, x2, y1, z1).setColor(dr, dg, db, alpha).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
-                builder.addVertex(mat, x2, y1, z2).setColor(dr, dg, db, alpha).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(0, -1, 0);
-            }
-            default -> {
-                float sr = r * 0.8f, sg = g * 0.8f, sb = b * 0.8f;
-                builder.addVertex(mat, x1, y1, z2).setColor(sr, sg, sb, alpha).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
-                builder.addVertex(mat, x2, y1, z2).setColor(sr, sg, sb, alpha).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
-                builder.addVertex(mat, x2, y2, z2).setColor(sr, sg, sb, alpha).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
-                builder.addVertex(mat, x1, y2, z2).setColor(sr, sg, sb, alpha).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(0, 0, 1);
-            }
         }
     }
 

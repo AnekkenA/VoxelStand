@@ -92,7 +92,7 @@ public class DynamicAttributeHandler {
 
             if (damage > 0) {
                 event.addModifier(Attributes.ATTACK_DAMAGE, new AttributeModifier(
-                        BASE_ATTACK_DAMAGE_ID, damage, AttributeModifier.Operation.ADD_VALUE), net.minecraft.world.entity.EquipmentSlotGroup.MAINHAND);
+                        BASE_ATTACK_DAMAGE_ID, Math.max(0.0, damage - 1.0), AttributeModifier.Operation.ADD_VALUE), net.minecraft.world.entity.EquipmentSlotGroup.MAINHAND);
             }
             if (speed > 0) {
                 event.addModifier(Attributes.ATTACK_SPEED, new AttributeModifier(

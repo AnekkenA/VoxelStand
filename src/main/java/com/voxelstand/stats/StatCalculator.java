@@ -234,7 +234,7 @@ public final class StatCalculator {
 
             // Если общая масса брони превышает стандартный каркас (игрок наложил тяжелые пластины)
             if (totalWeight > 450.0f) {
-                addedArmor += Math.min(1.0f, (totalWeight - 450.0f) / 350.0f);
+                addedArmor += Math.min(1.5f, (totalWeight - 450.0f) / 350.0f);
             }
             if (counts[VoxelMaterial.NETHERITE.getId()] > 150) {
                 addedKnockback += Math.min(0.05f, (counts[VoxelMaterial.NETHERITE.getId()] - 150) * 0.0002f);
@@ -243,9 +243,9 @@ public final class StatCalculator {
                 addedToughness += Math.min(1.0f, (counts[VoxelMaterial.DIAMOND.getId()] - 150) * 0.003f);
             }
 
-            data.armor = baseDefense + addedArmor;
-            data.armorToughness = baseToughness + addedToughness;
-            data.knockbackResistance = baseKnockback + addedKnockback;
+            data.armor = baseDefense + (addedArmor * qualityMultiplier);
+            data.armorToughness = baseToughness + (addedToughness * qualityMultiplier);
+            data.knockbackResistance = baseKnockback + (addedKnockback * qualityMultiplier);
             data.damage = 0;
         } else if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.ShieldItem) {
             // Щит
@@ -329,7 +329,7 @@ public final class StatCalculator {
                 inlayDamageBonus = 0.8f;
             }
 
-            data.damage = baseDmg + massBonus + inlayDamageBonus;
+            data.damage = baseDmg + (massBonus + inlayDamageBonus) * qualityMultiplier;
             data.armor = 0;
             data.armorToughness = 0;
             data.knockbackResistance = 0;
@@ -384,12 +384,7 @@ public final class StatCalculator {
         // 7. Применение модификатора качества пластин (K_quality)
         if (qualityMultiplier > 0.0f && qualityMultiplier != 1.0f) {
             data.qualityMultiplier = qualityMultiplier;
-            data.damage *= qualityMultiplier;
-            data.attackSpeed *= qualityMultiplier;
             data.maxDurability = Math.max(1, (int) (data.maxDurability * qualityMultiplier));
-            data.armor *= qualityMultiplier;
-            data.armorToughness *= qualityMultiplier;
-            data.knockbackResistance *= qualityMultiplier;
             data.arrowVelocityMult *= qualityMultiplier;
             data.armorPenetration = Math.min(0.85f, data.armorPenetration * qualityMultiplier);
 

@@ -17,36 +17,42 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SculptStandBlockEntity extends BlockEntity {
-    public enum StandMode {
-        EMPTY,
-        WEAPON,
-        HELMET,
-        CHESTPLATE,
-        LEGGINGS,
-        BOOTS
+    public enum StandMode implements StringRepresentable {
+        EMPTY("empty"),
+        WEAPON("weapon"),
+        HELMET("helmet"),
+        CHESTPLATE("chestplate"),
+        LEGGINGS("leggings"),
+        BOOTS("boots");
+
+        private final String name;
+        StandMode(String name) { this.name = name; }
+        @Override
+        public String getSerializedName() { return this.name; }
     }
 
     private StandMode mode = StandMode.EMPTY;
     private ItemStack heldItem = ItemStack.EMPTY;
     private final Map<String, VoxelGrid> grids = new HashMap<>();
     private boolean symmetryMode = true;
-    private int guideMode = 0; // 0 = Солома, 1 = Каркас и веревки, 2 = Скрыт
+    private int guideMode = 0; // 0 = РЎРѕР»РѕРјР°, 1 = РљР°СЂРєР°СЃ Рё РІРµСЂРµРІРєРё, 2 = РЎРєСЂС‹С‚
     private long lastFinalizeAttempt = 0;
     private boolean isPoseCustomizationOnly = false;
     private ItemPoseData currentPose = new ItemPoseData();
 
-    // Трекинг качества вложенных пластин (Normal, Sturdy, Pure)
+    // РўСЂРµРєРёРЅРі РєР°С‡РµСЃС‚РІР° РІР»РѕР¶РµРЅРЅС‹С… РїР»Р°СЃС‚РёРЅ (Normal, Sturdy, Pure)
     private int platesNormal = 0;
     private int platesSturdy = 0;
     private int platesPure = 0;
 
-    // Голограмма-призрак чертежа (Ghost Blueprint с прозрачностью 0.7)
+    // Р“РѕР»РѕРіСЂР°РјРјР°-РїСЂРёР·СЂР°Рє С‡РµСЂС‚РµР¶Р° (Ghost Blueprint СЃ РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊСЋ 0.7)
     private boolean hasGhostBlueprint = false;
     private String ghostBlueprintName = "";
     private final Map<String, VoxelGrid> ghostGrids = new HashMap<>();
@@ -71,9 +77,9 @@ public class SculptStandBlockEntity extends BlockEntity {
 
     public String getQualityName() {
         float mult = calculateQualityMultiplier();
-        if (mult >= 1.25f) return "Чистое";
-        if (mult >= 1.10f) return "Крепкое";
-        return "Обычное";
+        if (mult >= 1.25f) return "Р§РёСЃС‚РѕРµ";
+        if (mult >= 1.10f) return "РљСЂРµРїРєРѕРµ";
+        return "РћР±С‹С‡РЅРѕРµ";
     }
 
     public int getPlatesNormal() { return platesNormal; }
@@ -201,13 +207,22 @@ public class SculptStandBlockEntity extends BlockEntity {
     }
 
     /**
-     * Установка предмета на стойку.
-     * В Full-версии:
-     * 1. Если предмет уже скован (CustomSmithForged) — разрешает вход в режим ТОЛЬКО настройки позы и хвата!
-     * 2. Ванильные предметы из данжей стандартизируются и очищаются от старых чар.
+     * РЈСЃС‚Р°РЅРѕРІРєР° РїСЂРµРґРјРµС‚Р° РЅР° СЃС‚РѕР№РєСѓ.
+     * Р’ Full-РІРµСЂСЃРёРё:
+     * 1. Р•СЃР»Рё РїСЂРµРґРјРµС‚ СѓР¶Рµ СЃРєРѕРІР°РЅ (CustomSmithForged) вЂ” СЂР°Р·СЂРµС€Р°РµС‚ РІС…РѕРґ РІ СЂРµР¶РёРј РўРћР›Р¬РљРћ РЅР°СЃС‚СЂРѕР№РєРё РїРѕР·С‹ Рё С…РІР°С‚Р°!
+     * 2. Р’Р°РЅРёР»СЊРЅС‹Рµ РїСЂРµРґРјРµС‚С‹ РёР· РґР°РЅР¶РµР№ СЃС‚Р°РЅРґР°СЂС‚РёР·РёСЂСѓСЋС‚СЃСЏ Рё РѕС‡РёС‰Р°СЋС‚СЃСЏ РѕС‚ СЃС‚Р°СЂС‹С… С‡Р°СЂ.
      */
-    public boolean setItem(ItemStack stack) {
+    public boolean canAcceptItem(ItemStack stack) {
         if (stack.isEmpty()) return false;
+        if (stack.getItem() instanceof com.voxelstand.item.ChiselItem ||
+            stack.getItem() instanceof com.voxelstand.item.PlateItem) {
+            return false;
+        }
+        return detectMode(stack) != StandMode.EMPTY;
+    }
+
+    public boolean setItem(ItemStack stack) {
+        if (!canAcceptItem(stack)) return false;
 
         boolean isAlreadyForged = com.voxelstand.api.VoxelDataHelper.hasCustomKey(stack, "CustomSmithForged") 
                 && com.voxelstand.api.VoxelDataHelper.getCustomData(stack).getBoolean("CustomSmithForged");
@@ -235,6 +250,12 @@ public class SculptStandBlockEntity extends BlockEntity {
         }
 
         setChanged();
+        if (this.level != null && !this.level.isClientSide) {
+            BlockState bState = this.level.getBlockState(this.worldPosition);
+            if (bState.hasProperty(com.voxelstand.block.SculptStandBlock.MODE)) {
+                this.level.setBlock(this.worldPosition, bState.setValue(com.voxelstand.block.SculptStandBlock.MODE, this.mode), 3);
+            }
+        }
         return true;
     }
 
@@ -312,8 +333,8 @@ public class SculptStandBlockEntity extends BlockEntity {
     }
 
     /**
-     * Окончательное запечатывание предмета (Finalize & Extract).
-     * Вычисляет урон, вес, прочность, чары от материалов и ставит метку CustomSmithForged.
+     * РћРєРѕРЅС‡Р°С‚РµР»СЊРЅРѕРµ Р·Р°РїРµС‡Р°С‚С‹РІР°РЅРёРµ РїСЂРµРґРјРµС‚Р° (Finalize & Extract).
+     * Р’С‹С‡РёСЃР»СЏРµС‚ СѓСЂРѕРЅ, РІРµСЃ, РїСЂРѕС‡РЅРѕСЃС‚СЊ, С‡Р°СЂС‹ РѕС‚ РјР°С‚РµСЂРёР°Р»РѕРІ Рё СЃС‚Р°РІРёС‚ РјРµС‚РєСѓ CustomSmithForged.
      */
     public ItemStack finalizeAndExtractItem() {
         if (heldItem.isEmpty()) return ItemStack.EMPTY;
@@ -321,7 +342,7 @@ public class SculptStandBlockEntity extends BlockEntity {
         ItemStack result = heldItem.copy();
         CompoundTag rootTag = com.voxelstand.api.VoxelDataHelper.getCustomData(result);
 
-        // Если это повторная установка для смены позы: обновляем ТОЛЬКО позу, не трогая статы!
+        // Р•СЃР»Рё СЌС‚Рѕ РїРѕРІС‚РѕСЂРЅР°СЏ СѓСЃС‚Р°РЅРѕРІРєР° РґР»СЏ СЃРјРµРЅС‹ РїРѕР·С‹: РѕР±РЅРѕРІР»СЏРµРј РўРћР›Р¬РљРћ РїРѕР·Сѓ, РЅРµ С‚СЂРѕРіР°СЏ СЃС‚Р°С‚С‹!
         if (isPoseCustomizationOnly) {
             rootTag.put(VoxelConstants.NBT_POSE_DATA, currentPose.toNbt());
         com.voxelstand.api.VoxelDataHelper.setCustomData(result, rootTag);
@@ -343,7 +364,7 @@ public class SculptStandBlockEntity extends BlockEntity {
         boolean isArmor = heldItem.getItem() instanceof ArmorItem;
         ItemStatData stats = StatCalculator.calculate(grids, isArmor, heldItem, qualityMultiplier);
 
-        // 1. Сохранение вокселей для 3D рендера
+        // 1. РЎРѕС…СЂР°РЅРµРЅРёРµ РІРѕРєСЃРµР»РµР№ РґР»СЏ 3D СЂРµРЅРґРµСЂР°
         if (mode == StandMode.WEAPON) {
             VoxelGrid g = grids.get("weapon");
             if (g != null && g.getNonEmptyCount() > 0) {
@@ -359,7 +380,7 @@ public class SculptStandBlockEntity extends BlockEntity {
             rootTag.put(VoxelConstants.NBT_VOXEL_MODEL, modelTag);
         }
 
-        // 2. Запись RPG-характеристик и качества
+        // 2. Р—Р°РїРёСЃСЊ RPG-С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРє Рё РєР°С‡РµСЃС‚РІР°
         rootTag.put("CustomSmithStats", stats.toNBT());
         rootTag.putBoolean("CustomSmithForged", true);
         rootTag.putBoolean("CustomSmithBaked", true);
@@ -372,7 +393,7 @@ public class SculptStandBlockEntity extends BlockEntity {
         rootTag.putInt("PlatesSturdy", platesSturdy);
         rootTag.putInt("PlatesPure", platesPure);
 
-        // 3. Запись вычисленных ванильных зачарований
+        // 3. Р—Р°РїРёСЃСЊ РІС‹С‡РёСЃР»РµРЅРЅС‹С… РІР°РЅРёР»СЊРЅС‹С… Р·Р°С‡Р°СЂРѕРІР°РЅРёР№
         if (this.level != null) {
             var lookup = this.level.registryAccess().lookup(Registries.ENCHANTMENT);
             if (lookup.isPresent()) {
@@ -383,14 +404,14 @@ public class SculptStandBlockEntity extends BlockEntity {
             }
         }
 
-        // 4. Запись позы (умная рекомендация по умолчанию)
+        // 4. Р—Р°РїРёСЃСЊ РїРѕР·С‹ (СѓРјРЅР°СЏ СЂРµРєРѕРјРµРЅРґР°С†РёСЏ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ)
         if (currentPose == null || (currentPose.armPitch == 0 && currentPose.itemRotY == 0 && !currentPose.twoHanded)) {
             currentPose = ItemPoseData.createDefault(stats.totalWeight, heldItem.getItem() instanceof ShieldItem);
         }
         rootTag.put(VoxelConstants.NBT_POSE_DATA, currentPose.toNbt());
         com.voxelstand.api.VoxelDataHelper.setCustomData(result, rootTag);
 
-        // Сброс стойки
+        // РЎР±СЂРѕСЃ СЃС‚РѕР№РєРё
         this.heldItem = ItemStack.EMPTY;
         this.mode = StandMode.EMPTY;
         this.grids.clear();
@@ -400,6 +421,12 @@ public class SculptStandBlockEntity extends BlockEntity {
         this.platesSturdy = 0;
         this.platesPure = 0;
         setChanged();
+        if (this.level != null && !this.level.isClientSide) {
+            BlockState bState = this.level.getBlockState(this.worldPosition);
+            if (bState.hasProperty(com.voxelstand.block.SculptStandBlock.MODE)) {
+                this.level.setBlock(this.worldPosition, bState.setValue(com.voxelstand.block.SculptStandBlock.MODE, StandMode.EMPTY), 3);
+            }
+        }
 
         return result;
     }
@@ -498,5 +525,21 @@ public class SculptStandBlockEntity extends BlockEntity {
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider) {
+        CompoundTag tag = pkt.getTag();
+        if (tag != null) {
+            loadAdditional(tag, lookupProvider);
+        }
+    }
+
+    @Override
+    public void setChanged() {
+        super.setChanged();
+        if (this.level != null && !this.level.isClientSide) {
+            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
+        }
     }
 }

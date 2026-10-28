@@ -31,12 +31,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Нарезчик пластин (Minecraft 1.21.1 NeoForge).
- * Нарезает слитки, самоцветы и ресурсы в неисследованные пластины.
- * Полностью совместим со сборками на ~800+ модов:
- * - Поддерживает ванильные материалы
- * - Поддерживает модовые материалы из ModdedMaterialCatalog (Create, Thermal, Mekanism, etc.)
- * - Поддерживает любые сторонние предметы с тегами #c:ingots, #c:gems, #c:raw_materials с динамическим семплированием цвета центрального пикселя!
+ * РќР°СЂРµР·С‡РёРє РїР»Р°СЃС‚РёРЅ (Minecraft 1.21.1 NeoForge).
+ * РќР°СЂРµР·Р°РµС‚ СЃР»РёС‚РєРё, СЃР°РјРѕС†РІРµС‚С‹ Рё СЂРµСЃСѓСЂСЃС‹ РІ РЅРµРёСЃСЃР»РµРґРѕРІР°РЅРЅС‹Рµ РїР»Р°СЃС‚РёРЅС‹.
+ * РџРѕР»РЅРѕСЃС‚СЊСЋ СЃРѕРІРјРµСЃС‚РёРј СЃРѕ СЃР±РѕСЂРєР°РјРё РЅР° ~800+ РјРѕРґРѕРІ:
+ * - РџРѕРґРґРµСЂР¶РёРІР°РµС‚ РІР°РЅРёР»СЊРЅС‹Рµ РјР°С‚РµСЂРёР°Р»С‹
+ * - РџРѕРґРґРµСЂР¶РёРІР°РµС‚ РјРѕРґРѕРІС‹Рµ РјР°С‚РµСЂРёР°Р»С‹ РёР· ModdedMaterialCatalog (Create, Thermal, Mekanism, etc.)
+ * - РџРѕРґРґРµСЂР¶РёРІР°РµС‚ Р»СЋР±С‹Рµ СЃС‚РѕСЂРѕРЅРЅРёРµ РїСЂРµРґРјРµС‚С‹ СЃ С‚РµРіР°РјРё #c:ingots, #c:gems, #c:raw_materials СЃ РґРёРЅР°РјРёС‡РµСЃРєРёРј СЃРµРјРїР»РёСЂРѕРІР°РЅРёРµРј С†РІРµС‚Р° С†РµРЅС‚СЂР°Р»СЊРЅРѕРіРѕ РїРёРєСЃРµР»СЏ!
  */
 import com.voxelstand.block.entity.StandPartBlockEntity;
 import net.minecraft.core.Direction;
@@ -81,7 +81,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getHorizontalDirection().getOpposite();
+        Direction facing = context.getHorizontalDirection();
         Direction right = facing.getClockWise();
         BlockPos pos = context.getClickedPos();
         Level level = context.getLevel();
@@ -111,6 +111,22 @@ public class PlateCrafterBlock extends BaseEntityBlock {
     }
 
     @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            if (!level.isClientSide) {
+                Direction facing = state.getValue(FACING);
+                Direction right = facing.getClockWise();
+                BlockPos pRight = pos.relative(right);
+                BlockState partState = level.getBlockState(pRight);
+                if (partState.is(ModBlocks.STAND_PART.get())) {
+                    level.removeBlock(pRight, false);
+                }
+            }
+            super.onRemove(state, level, pos, newState, isMoving);
+        }
+    }
+
+    @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide) {
             Direction facing = state.getValue(FACING);
@@ -118,7 +134,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
             BlockPos pRight = pos.relative(right);
             BlockState partState = level.getBlockState(pRight);
             if (partState.is(ModBlocks.STAND_PART.get())) {
-                level.setBlock(pRight, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+                level.removeBlock(pRight, false);
             }
         }
         return super.playerWillDestroy(level, pos, state, player);
@@ -157,21 +173,21 @@ public class PlateCrafterBlock extends BaseEntityBlock {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
-        // Shift + ПКМ: переключение размера нарезаемых пластин
+        // Shift + РџРљРњ: РїРµСЂРµРєР»СЋС‡РµРЅРёРµ СЂР°Р·РјРµСЂР° РЅР°СЂРµР·Р°РµРјС‹С… РїР»Р°СЃС‚РёРЅ
         if (player.isShiftKeyDown()) {
             if (!level.isClientSide) {
                 PlateSize[] sizes = PlateSize.values();
                 int nextIndex = (currentSelectedSize.ordinal() + 1) % sizes.length;
                 currentSelectedSize = sizes[nextIndex];
                 player.displayClientMessage(
-                        Component.literal("§e[Нарезчик] Выбран размер: §f" + currentSelectedSize.getName() +
-                                " §7(выход: " + currentSelectedSize.getCraftYield() + " шт., расход: " + currentSelectedSize.getIngredientCost() + " слиток)"), true);
+                        Component.literal("В§e[РќР°СЂРµР·С‡РёРє] Р’С‹Р±СЂР°РЅ СЂР°Р·РјРµСЂ: В§f" + currentSelectedSize.getName() +
+                                " В§7(РІС‹С…РѕРґ: " + currentSelectedSize.getCraftYield() + " С€С‚., СЂР°СЃС…РѕРґ: " + currentSelectedSize.getIngredientCost() + " СЃР»РёС‚РѕРє)"), true);
                 level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.5f, 1.2f);
             }
             return ItemInteractionResult.SUCCESS;
         }
 
-        // Клик пластиной по нарезчику: подсказка по осмотру через подзорную трубу
+        // РљР»РёРє РїР»Р°СЃС‚РёРЅРѕР№ РїРѕ РЅР°СЂРµР·С‡РёРєСѓ: РїРѕРґСЃРєР°Р·РєР° РїРѕ РѕСЃРјРѕС‚СЂСѓ С‡РµСЂРµР· РїРѕРґР·РѕСЂРЅСѓСЋ С‚СЂСѓР±Сѓ
         if (held.getItem() instanceof PlateItem) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof PlateCrafterBlockEntity crafter) {
@@ -180,25 +196,25 @@ public class PlateCrafterBlock extends BaseEntityBlock {
 
             if (!level.isClientSide) {
                 if (!PlateItem.hasQuality(held)) {
-                    player.displayClientMessage(Component.literal("§e[Нарезчик] Для изучения качества пластины возьмите подзорную трубу в левую руку и зажмите ПКМ."), true);
+                    player.displayClientMessage(Component.literal("В§e[РќР°СЂРµР·С‡РёРє] Р”Р»СЏ РёР·СѓС‡РµРЅРёСЏ РєР°С‡РµСЃС‚РІР° РїР»Р°СЃС‚РёРЅС‹ РІРѕР·СЊРјРёС‚Рµ РїРѕРґР·РѕСЂРЅСѓСЋ С‚СЂСѓР±Сѓ РІ Р»РµРІСѓСЋ СЂСѓРєСѓ Рё Р·Р°Р¶РјРёС‚Рµ РџРљРњ."), true);
                 } else {
                     PlateQuality quality = PlateItem.getQuality(held);
-                    player.displayClientMessage(Component.literal("§a[Нарезчик] Пластина уже изучена: " + (quality != null ? quality.getDisplayName() : "") + " качество."), true);
+                    player.displayClientMessage(Component.literal("В§a[РќР°СЂРµР·С‡РёРє] РџР»Р°СЃС‚РёРЅР° СѓР¶Рµ РёР·СѓС‡РµРЅР°: " + (quality != null ? quality.getDisplayName() : "") + " РєР°С‡РµСЃС‚РІРѕ."), true);
                 }
                 level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.4f, 1.4f);
             }
             return ItemInteractionResult.SUCCESS;
         }
 
-        // Нарезка пластин из ресурсов
+        // РќР°СЂРµР·РєР° РїР»Р°СЃС‚РёРЅ РёР· СЂРµСЃСѓСЂСЃРѕРІ
         if (!held.isEmpty()) {
-            // 1. Проверяем ванильные материалы
+            // 1. РџСЂРѕРІРµСЂСЏРµРј РІР°РЅРёР»СЊРЅС‹Рµ РјР°С‚РµСЂРёР°Р»С‹
             VoxelMaterial mat = findMaterialForIngredient(held);
             if (mat != null && mat != VoxelMaterial.AIR) {
                 return executeCutVanilla(held, mat, level, pos, player);
             }
 
-            // 2. Проверяем модовые материалы (ModdedMaterialCatalog + теги #c:ingots / #c:gems)
+            // 2. РџСЂРѕРІРµСЂСЏРµРј РјРѕРґРѕРІС‹Рµ РјР°С‚РµСЂРёР°Р»С‹ (ModdedMaterialCatalog + С‚РµРіРё #c:ingots / #c:gems)
             ModdedMaterialCatalog.ModdedMaterial moddedMat = ModdedMaterialCatalog.resolve(held);
             if (moddedMat != null) {
                 return executeCutModded(held, moddedMat, level, pos, player);
@@ -210,7 +226,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        // Ручной толчок маховика пустой рукой (тактильный отклик)
+        // Р СѓС‡РЅРѕР№ С‚РѕР»С‡РѕРє РјР°С…РѕРІРёРєР° РїСѓСЃС‚РѕР№ СЂСѓРєРѕР№ (С‚Р°РєС‚РёР»СЊРЅС‹Р№ РѕС‚РєР»РёРє)
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof PlateCrafterBlockEntity crafter) {
             crafter.triggerSpin();
@@ -230,7 +246,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
             int cost = currentSelectedSize.getIngredientCost();
             if (held.getCount() < cost) {
                 player.displayClientMessage(
-                        Component.literal("§cДля размера " + currentSelectedSize.getName() + " требуется " + cost + " ед. материала!"), true);
+                        Component.literal("В§cР”Р»СЏ СЂР°Р·РјРµСЂР° " + currentSelectedSize.getName() + " С‚СЂРµР±СѓРµС‚СЃСЏ " + cost + " РµРґ. РјР°С‚РµСЂРёР°Р»Р°!"), true);
                 level.playSound(null, pos, SoundEvents.VILLAGER_NO, SoundSource.BLOCKS, 0.6f, 1.0f);
                 return ItemInteractionResult.FAIL;
             }
@@ -242,7 +258,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
             }
             level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.7f, 1.4f);
             player.displayClientMessage(
-                    Component.literal("§aНарезано " + currentSelectedSize.getCraftYield() + " неисследованных пластин (" + currentSelectedSize.getName() + ") из " + mat.getName()), true);
+                    Component.literal("В§aРќР°СЂРµР·Р°РЅРѕ " + currentSelectedSize.getCraftYield() + " РЅРµРёСЃСЃР»РµРґРѕРІР°РЅРЅС‹С… РїР»Р°СЃС‚РёРЅ (" + currentSelectedSize.getName() + ") РёР· " + mat.getName()), true);
         }
         return ItemInteractionResult.SUCCESS;
     }
@@ -257,12 +273,12 @@ public class PlateCrafterBlock extends BaseEntityBlock {
             int cost = currentSelectedSize.getIngredientCost();
             if (held.getCount() < cost) {
                 player.displayClientMessage(
-                        Component.literal("§cДля размера " + currentSelectedSize.getName() + " требуется " + cost + " ед. материала!"), true);
+                        Component.literal("В§cР”Р»СЏ СЂР°Р·РјРµСЂР° " + currentSelectedSize.getName() + " С‚СЂРµР±СѓРµС‚СЃСЏ " + cost + " РµРґ. РјР°С‚РµСЂРёР°Р»Р°!"), true);
                 level.playSound(null, pos, SoundEvents.VILLAGER_NO, SoundSource.BLOCKS, 0.6f, 1.0f);
                 return ItemInteractionResult.FAIL;
             }
 
-            // Динамическое определение цвета (сэмплинг центрального пикселя спрайта или каталог)
+            // Р”РёРЅР°РјРёС‡РµСЃРєРѕРµ РѕРїСЂРµРґРµР»РµРЅРёРµ С†РІРµС‚Р° (СЃСЌРјРїР»РёРЅРі С†РµРЅС‚СЂР°Р»СЊРЅРѕРіРѕ РїРёРєСЃРµР»СЏ СЃРїСЂР°Р№С‚Р° РёР»Рё РєР°С‚Р°Р»РѕРі)
             int color = DynamicMaterialSampler.sampleItemColor(held);
             held.shrink(cost);
 
@@ -272,7 +288,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
             }
             level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.7f, 1.4f);
             player.displayClientMessage(
-                    Component.literal("§bНарезано " + currentSelectedSize.getCraftYield() + " неисследованных пластин (" + currentSelectedSize.getName() + ") из " + moddedMat.getDisplayName() + String.format(" [RGB: #%06X]", (color & 0xFFFFFF))), true);
+                    Component.literal("В§bРќР°СЂРµР·Р°РЅРѕ " + currentSelectedSize.getCraftYield() + " РЅРµРёСЃСЃР»РµРґРѕРІР°РЅРЅС‹С… РїР»Р°СЃС‚РёРЅ (" + currentSelectedSize.getName() + ") РёР· " + moddedMat.getDisplayName() + String.format(" [RGB: #%06X]", (color & 0xFFFFFF))), true);
         }
         return ItemInteractionResult.SUCCESS;
     }
@@ -285,7 +301,7 @@ public class PlateCrafterBlock extends BaseEntityBlock {
             }
         }
 
-        // Проверка ванильных материалов
+        // РџСЂРѕРІРµСЂРєР° РІР°РЅРёР»СЊРЅС‹С… РјР°С‚РµСЂРёР°Р»РѕРІ
         String desc = stack.getDescriptionId().toLowerCase();
         if (desc.contains("iron_ingot")) return VoxelMaterial.IRON;
         if (desc.contains("gold_ingot")) return VoxelMaterial.GOLD;

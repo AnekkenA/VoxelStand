@@ -48,11 +48,14 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import java.util.Map;
 
 public class SculptStandBlock extends BaseEntityBlock {
     public static final MapCodec<SculptStandBlock> CODEC = simpleCodec(SculptStandBlock::new);
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final EnumProperty<SculptStandBlockEntity.StandMode> MODE =
+            EnumProperty.create("mode", SculptStandBlockEntity.StandMode.class);
 
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
@@ -61,7 +64,9 @@ public class SculptStandBlock extends BaseEntityBlock {
 
     public SculptStandBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(FACING, Direction.NORTH)
+                .setValue(MODE, SculptStandBlockEntity.StandMode.EMPTY));
     }
 
     public SculptStandBlock() {
@@ -74,13 +79,13 @@ public class SculptStandBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, MODE);
     }
 
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getHorizontalDirection().getOpposite();
+        Direction facing = context.getHorizontalDirection();
         Direction right = facing.getClockWise();
         BlockPos pos = context.getClickedPos();
         Level level = context.getLevel();
@@ -95,7 +100,7 @@ public class SculptStandBlock extends BaseEntityBlock {
             return null;
         }
 
-        return this.defaultBlockState().setValue(FACING, facing);
+        return this.defaultBlockState().setValue(FACING, facing).setValue(MODE, SculptStandBlockEntity.StandMode.EMPTY);
     }
 
     @Override
@@ -123,6 +128,20 @@ public class SculptStandBlock extends BaseEntityBlock {
     }
 
     @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            if (!level.isClientSide) {
+                Direction facing = state.getValue(FACING);
+                Direction right = facing.getClockWise();
+                removePart(level, pos.relative(right));
+                removePart(level, pos.above());
+                removePart(level, pos.above().relative(right));
+            }
+            super.onRemove(state, level, pos, newState, isMoving);
+        }
+    }
+
+    @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide) {
             Direction facing = state.getValue(FACING);
@@ -137,7 +156,7 @@ public class SculptStandBlock extends BaseEntityBlock {
     private void removePart(Level level, BlockPos partPos) {
         BlockState partState = level.getBlockState(partPos);
         if (partState.is(ModBlocks.STAND_PART.get())) {
-            level.setBlock(partPos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            level.removeBlock(partPos, false);
         }
     }
 
@@ -186,11 +205,11 @@ public class SculptStandBlock extends BaseEntityBlock {
         }
 
         // =========================================================================
-        // 1. НАСТРОЙКА СТОЙКИ И ЗАВЕРШЕНИЕ: Shift + ПКМ
+        // 1. РќРђРЎРўР РћР™РљРђ РЎРўРћР™РљР Р Р—РђР’Р•Р РЁР•РќРР•: Shift + РџРљРњ
         // =========================================================================
         if (player.isShiftKeyDown()) {
             if (stand.getMode() != SculptStandBlockEntity.StandMode.EMPTY) {
-                // А. Держит долото: переключает симметрию стойки
+                // Рђ. Р”РµСЂР¶РёС‚ РґРѕР»РѕС‚Рѕ: РїРµСЂРµРєР»СЋС‡Р°РµС‚ СЃРёРјРјРµС‚СЂРёСЋ СЃС‚РѕР№РєРё
                 if (held.getItem() instanceof ChiselItem) {
                     if (!level.isClientSide) {
                         boolean sym = !stand.isSymmetryMode();
@@ -203,17 +222,17 @@ public class SculptStandBlock extends BaseEntityBlock {
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }
 
-                // Б. Пустая рука: ДВОЙНОЕ ПОДТВЕРЖДЕНИЕ ЗАПЕЧАТЫВАНИЯ ФОРМЫ или СНЯТИЕ ПРИ НАСТРОЙКЕ ПОЗЫ
+                // Р‘. РџСѓСЃС‚Р°СЏ СЂСѓРєР°: Р”Р’РћР™РќРћР• РџРћР”РўР’Р•Р Р–Р”Р•РќРР• Р—РђРџР•Р§РђРўР«Р’РђРќРРЇ Р¤РћР РњР« РёР»Рё РЎРќРЇРўРР• РџР Р РќРђРЎРўР РћР™РљР• РџРћР—Р«
                 if (held.isEmpty()) {
                     if (!level.isClientSide) {
-                        // Если предмет уже запечатан (режим настройки позы) — снимается сразу без перековки
+                        // Р•СЃР»Рё РїСЂРµРґРјРµС‚ СѓР¶Рµ Р·Р°РїРµС‡Р°С‚Р°РЅ (СЂРµР¶РёРј РЅР°СЃС‚СЂРѕР№РєРё РїРѕР·С‹) вЂ” СЃРЅРёРјР°РµС‚СЃСЏ СЃСЂР°Р·Сѓ Р±РµР· РїРµСЂРµРєРѕРІРєРё
                         if (stand.isPoseCustomizationOnly()) {
                             ItemStack updated = stand.finalizeAndExtractItem();
                             if (!player.addItem(updated)) {
                                 player.drop(updated, false);
                             }
                             level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.PLAYERS, 0.8f, 1.2f);
-                            player.displayClientMessage(Component.literal("§a[Кузница] Предмет снят со стапеля с обновленной позой!"), true);
+                            player.displayClientMessage(Component.literal("В§a[РљСѓР·РЅРёС†Р°] РџСЂРµРґРјРµС‚ СЃРЅСЏС‚ СЃРѕ СЃС‚Р°РїРµР»СЏ СЃ РѕР±РЅРѕРІР»РµРЅРЅРѕР№ РїРѕР·РѕР№!"), true);
                             return InteractionResult.sidedSuccess(level.isClientSide);
                         }
 
@@ -227,7 +246,7 @@ public class SculptStandBlock extends BaseEntityBlock {
                         long currentTime = level.getGameTime();
                         long lastAttempt = stand.getLastFinalizeAttempt();
 
-                        // Подтверждение: второй клик в течение 60 тиков (3 секунды)
+                        // РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ: РІС‚РѕСЂРѕР№ РєР»РёРє РІ С‚РµС‡РµРЅРёРµ 60 С‚РёРєРѕРІ (3 СЃРµРєСѓРЅРґС‹)
                         if (currentTime - lastAttempt <= 60 && currentTime > lastAttempt) {
                             ItemStack finalized = stand.finalizeAndExtractItem();
                             if (!finalized.isEmpty()) {
@@ -236,12 +255,12 @@ public class SculptStandBlock extends BaseEntityBlock {
                                 }
                                 level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.8f, 1.2f);
                                 level.playSound(null, pos, SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.7f, 1.4f);
-                                player.displayClientMessage(Component.literal("§a[Кузница] Предмет успешно выкован и запечатан! (Вокселей: " + count + ")"), false);
+                                player.displayClientMessage(Component.literal("В§a[РљСѓР·РЅРёС†Р°] РџСЂРµРґРјРµС‚ СѓСЃРїРµС€РЅРѕ РІС‹РєРѕРІР°РЅ Рё Р·Р°РїРµС‡Р°С‚Р°РЅ! (Р’РѕРєСЃРµР»РµР№: " + count + ")"), false);
                             }
                         } else {
-                            // Первое нажатие: предупреждение и отсчет 3 секунд
+                            // РџРµСЂРІРѕРµ РЅР°Р¶Р°С‚РёРµ: РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ Рё РѕС‚СЃС‡РµС‚ 3 СЃРµРєСѓРЅРґ
                             stand.setLastFinalizeAttempt(currentTime);
-                            player.displayClientMessage(Component.literal("§c[Внимание!] §eВы собираетесь запечатать предмет! Перековка будет невозможна.\n§6Нажмите Shift + ПКМ еще раз в течение 3 секунд для подтверждения."), false);
+                            player.displayClientMessage(Component.literal("В§c[Р’РЅРёРјР°РЅРёРµ!] В§eР’С‹ СЃРѕР±РёСЂР°РµС‚РµСЃСЊ Р·Р°РїРµС‡Р°С‚Р°С‚СЊ РїСЂРµРґРјРµС‚! РџРµСЂРµРєРѕРІРєР° Р±СѓРґРµС‚ РЅРµРІРѕР·РјРѕР¶РЅР°.\nВ§6РќР°Р¶РјРёС‚Рµ Shift + РџРљРњ РµС‰Рµ СЂР°Р· РІ С‚РµС‡РµРЅРёРµ 3 СЃРµРєСѓРЅРґ РґР»СЏ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ."), false);
                             level.playSound(null, pos, SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.BLOCKS, 0.8f, 1.2f);
                         }
                     }
@@ -249,69 +268,69 @@ public class SculptStandBlock extends BaseEntityBlock {
                 }
             }
 
-            // В. Пустая стойка или другой предмет: переключает режим манекена/ориентира
+            // Р’. РџСѓСЃС‚Р°СЏ СЃС‚РѕР№РєР° РёР»Рё РґСЂСѓРіРѕР№ РїСЂРµРґРјРµС‚: РїРµСЂРµРєР»СЋС‡Р°РµС‚ СЂРµР¶РёРј РјР°РЅРµРєРµРЅР°/РѕСЂРёРµРЅС‚РёСЂР°
             if (!level.isClientSide) {
                 stand.cycleGuideMode();
-                String[] modes = {"§eСоломенный манекен", "§bДеревянный каркас и канаты", "§7Скрыт"};
-                player.displayClientMessage(Component.literal("§6Настройка стойки: " + modes[stand.getGuideMode()]), true);
+                String[] modes = {"В§eРЎРѕР»РѕРјРµРЅРЅС‹Р№ РјР°РЅРµРєРµРЅ", "В§bР”РµСЂРµРІСЏРЅРЅС‹Р№ РєР°СЂРєР°СЃ Рё РєР°РЅР°С‚С‹", "В§7РЎРєСЂС‹С‚"};
+                player.displayClientMessage(Component.literal("В§6РќР°СЃС‚СЂРѕР№РєР° СЃС‚РѕР№РєРё: " + modes[stand.getGuideMode()]), true);
                 level.playSound(null, pos, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 0.6f, 1.1f);
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
         // =========================================================================
-        // 2. ИНФОРМАЦИЯ / НАСТРОЙКА ПОЗЫ: Обычный ПКМ пустой рукой
+        // 2. РРќР¤РћР РњРђР¦РРЇ / РќРђРЎРўР РћР™РљРђ РџРћР—Р«: РћР±С‹С‡РЅС‹Р№ РџРљРњ РїСѓСЃС‚РѕР№ СЂСѓРєРѕР№
         // =========================================================================
         if (held.isEmpty() && stand.getMode() != SculptStandBlockEntity.StandMode.EMPTY) {
             if (!level.isClientSide) {
                 if (stand.isPoseCustomizationOnly()) {
-                    // Циклический поворот острия предмета
+                    // Р¦РёРєР»РёС‡РµСЃРєРёР№ РїРѕРІРѕСЂРѕС‚ РѕСЃС‚СЂРёСЏ РїСЂРµРґРјРµС‚Р°
                     stand.cyclePoseRotation();
-                    player.displayClientMessage(Component.literal("§6[Стойка/Поза] Поворот острия: §e" + (int)stand.getCurrentPose().itemRotY + "° " +
-                            "§7(Shift + ПКМ пустой рукой — забрать; Долотом — переключить 1/2 руки)"), true);
+                    player.displayClientMessage(Component.literal("В§6[РЎС‚РѕР№РєР°/РџРѕР·Р°] РџРѕРІРѕСЂРѕС‚ РѕСЃС‚СЂРёСЏ: В§e" + (int)stand.getCurrentPose().itemRotY + "В° " +
+                            "В§7(Shift + РџРљРњ РїСѓСЃС‚РѕР№ СЂСѓРєРѕР№ вЂ” Р·Р°Р±СЂР°С‚СЊ; Р”РѕР»РѕС‚РѕРј вЂ” РїРµСЂРµРєР»СЋС‡РёС‚СЊ 1/2 СЂСѓРєРё)"), true);
                     level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 0.7f, 1.2f);
                 } else {
                     int count = stand.getTotalVoxelCount();
                     ItemStatData stats = StatCalculator.calculate(stand.getAllGrids(), stand.getHeldItem());
                     String itemName = stand.getHeldItem().getHoverName().getString();
 
-                    player.displayClientMessage(Component.literal("§6=== [ СТАПЕЛЬ: " + itemName + " ] ==="), false);
-                    String inlayText = stats.inlayRatio > 0 ? (" §8(Инкрустация: " + (int) (stats.inlayRatio * 100) + "%)") : "";
+                    player.displayClientMessage(Component.literal("В§6=== [ РЎРўРђРџР•Р›Р¬: " + itemName + " ] ==="), false);
+                    String inlayText = stats.inlayRatio > 0 ? (" В§8(РРЅРєСЂСѓСЃС‚Р°С†РёСЏ: " + (int) (stats.inlayRatio * 100) + "%)") : "";
                     float qMult = stand.calculateQualityMultiplier();
-                    String qText = qMult > 1.0f ? (" §8| §7Качество: §6" + stand.getQualityName() + " (x" + String.format("%.2f", qMult) + ")") : "";
-                    player.displayClientMessage(Component.literal("§7Воксели: §e" + count + " / " + VoxelConstants.DEFAULT_VOXEL_LIMIT +
-                            " §8| §7Класс: " + stats.weightClass.getFormattedBadge() +
-                            " §8| §7Вес: §f" + String.format("%.1f", stats.weight) + inlayText + qText), false);
+                    String qText = qMult > 1.0f ? (" В§8| В§7РљР°С‡РµСЃС‚РІРѕ: В§6" + stand.getQualityName() + " (x" + String.format("%.2f", qMult) + ")") : "";
+                    player.displayClientMessage(Component.literal("В§7Р’РѕРєСЃРµР»Рё: В§e" + count + " / " + VoxelConstants.DEFAULT_VOXEL_LIMIT +
+                            " В§8| В§7РљР»Р°СЃСЃ: " + stats.weightClass.getFormattedBadge() +
+                            " В§8| В§7Р’РµСЃ: В§f" + String.format("%.1f", stats.weight) + inlayText + qText), false);
 
                     if (stand.hasGhostBlueprint()) {
-                        player.displayClientMessage(Component.literal("§d[Голограмма чертежа]: §f" + stand.getGhostBlueprintName() + " §7(прозрачность 0.7)"), false);
+                        player.displayClientMessage(Component.literal("В§d[Р“РѕР»РѕРіСЂР°РјРјР° С‡РµСЂС‚РµР¶Р°]: В§f" + stand.getGhostBlueprintName() + " В§7(РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ 0.7)"), false);
                     }
 
                     if (stand.getHeldItem().getItem() instanceof BowItem || stand.getHeldItem().getItem() instanceof CrossbowItem) {
-                        player.displayClientMessage(Component.literal("§7Натяжение: §b" + String.format("%.2fs", stats.drawSpeedTicks / 20.0f) +
-                                " (" + (int) stats.drawSpeedTicks + "т) §8| §7Скор. стрелы: §a+" + (int) ((stats.arrowVelocityMult - 1.0f) * 100) + "%" +
-                                " §8| §7Бронепробитие: §6" + (int) (stats.armorPenetration * 100) + "%"), false);
+                        player.displayClientMessage(Component.literal("В§7РќР°С‚СЏР¶РµРЅРёРµ: В§b" + String.format("%.2fs", stats.drawSpeedTicks / 20.0f) +
+                                " (" + (int) stats.drawSpeedTicks + "С‚) В§8| В§7РЎРєРѕСЂ. СЃС‚СЂРµР»С‹: В§a+" + (int) ((stats.arrowVelocityMult - 1.0f) * 100) + "%" +
+                                " В§8| В§7Р‘СЂРѕРЅРµРїСЂРѕР±РёС‚РёРµ: В§6" + (int) (stats.armorPenetration * 100) + "%"), false);
                     } else if (stand.getHeldItem().getItem() instanceof ArmorItem) {
-                        player.displayClientMessage(Component.literal("§7Защита: §b+" + String.format("%.1f", stats.armor) +
-                                " §8| §7Стойкость: §9+" + String.format("%.1f", stats.armorToughness) +
-                                " §8| §7Штраф скорости: §c-" + String.format("%.1f%%", Math.abs(stats.movementSpeedPenalty * 100))), false);
+                        player.displayClientMessage(Component.literal("В§7Р—Р°С‰РёС‚Р°: В§b+" + String.format("%.1f", stats.armor) +
+                                " В§8| В§7РЎС‚РѕР№РєРѕСЃС‚СЊ: В§9+" + String.format("%.1f", stats.armorToughness) +
+                                " В§8| В§7РЁС‚СЂР°С„ СЃРєРѕСЂРѕСЃС‚Рё: В§c-" + String.format("%.1f%%", Math.abs(stats.movementSpeedPenalty * 100))), false);
                     } else if (stand.getHeldItem().getItem() instanceof ShieldItem) {
-                        player.displayClientMessage(Component.literal("§7Сопротивление толчку: §6+" + (int) (stats.knockbackResistance * 100) + "%" +
-                                " §8| §7Прочность: §a" + stats.maxDurability), false);
+                        player.displayClientMessage(Component.literal("В§7РЎРѕРїСЂРѕС‚РёРІР»РµРЅРёРµ С‚РѕР»С‡РєСѓ: В§6+" + (int) (stats.knockbackResistance * 100) + "%" +
+                                " В§8| В§7РџСЂРѕС‡РЅРѕСЃС‚СЊ: В§a" + stats.maxDurability), false);
                     } else {
-                        player.displayClientMessage(Component.literal("§7Урон: §c+" + String.format("%.1f", stats.damage) +
-                                " §8| §7Скор. атаки: §b" + String.format("%.2f", stats.attackSpeed) +
-                                " §8| §7Прочность: §a" + stats.maxDurability), false);
+                        player.displayClientMessage(Component.literal("В§7РЈСЂРѕРЅ: В§c+" + String.format("%.1f", stats.damage) +
+                                " В§8| В§7РЎРєРѕСЂ. Р°С‚Р°РєРё: В§b" + String.format("%.2f", stats.attackSpeed) +
+                                " В§8| В§7РџСЂРѕС‡РЅРѕСЃС‚СЊ: В§a" + stats.maxDurability), false);
                     }
 
                     if (!stats.enchantments.isEmpty()) {
-                        StringBuilder enchSb = new StringBuilder("§dЗачарования: ");
+                        StringBuilder enchSb = new StringBuilder("В§dР—Р°С‡Р°СЂРѕРІР°РЅРёСЏ: ");
                         for (Map.Entry<ResourceLocation, Integer> entry : stats.enchantments.entrySet()) {
-                            enchSb.append("§5✦ ").append(Component.translatable("enchantment." + entry.getKey().getNamespace() + "." + entry.getKey().getPath()).getString()).append(" ").append(entry.getValue()).append(" ");
+                            enchSb.append("В§5вњ¦ ").append(Component.translatable("enchantment." + entry.getKey().getNamespace() + "." + entry.getKey().getPath()).getString()).append(" ").append(entry.getValue()).append(" ");
                         }
                         player.displayClientMessage(Component.literal(enchSb.toString()), false);
                     }
-                    player.displayClientMessage(Component.literal("§7(Для завершения ковки нажмите §6Shift + ПКМ дважды§7)"), false);
+                    player.displayClientMessage(Component.literal("В§7(Р”Р»СЏ Р·Р°РІРµСЂС€РµРЅРёСЏ РєРѕРІРєРё РЅР°Р¶РјРёС‚Рµ В§6Shift + РџРљРњ РґРІР°Р¶РґС‹В§7)"), false);
                     level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.3f, 1.8f);
                 }
             }
@@ -319,37 +338,52 @@ public class SculptStandBlock extends BaseEntityBlock {
         }
 
         // =========================================================================
-        // 3. УСТАНОВКА НОВОГО ПРЕДМЕТА: ПКМ с оружием или броней
+        // 3. РЈРЎРўРђРќРћР’РљРђ РќРћР’РћР“Рћ РџР Р•Р”РњР•РўРђ: РџРљРњ СЃ РѕСЂСѓР¶РёРµРј РёР»Рё Р±СЂРѕРЅРµР№
         // =========================================================================
         if (stand.getMode() == SculptStandBlockEntity.StandMode.EMPTY && !held.isEmpty()) {
-            if (stand.setItem(held.split(1))) {
-                if (!level.isClientSide) {
-                    level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.BLOCKS, 0.8f, 1.0f);
-                    player.displayClientMessage(Component.literal("§aПредмет установлен на стапель. Авто-каркас сформирован!"), true);
+            if (!(held.getItem() instanceof ChiselItem) && !(held.getItem() instanceof PlateItem)) {
+                ItemStack candidate = held.copyWithCount(1);
+                if (stand.canAcceptItem(candidate)) {
+                    if (stand.setItem(candidate)) {
+                        held.shrink(1);
+                        if (!level.isClientSide) {
+                            level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.BLOCKS, 0.8f, 1.0f);
+                            player.displayClientMessage(Component.literal("§aПредмет установлен на стапель. Авто-каркас сформирован!"), true);
+                        }
+                        return InteractionResult.sidedSuccess(level.isClientSide);
+                    }
                 }
-                return InteractionResult.sidedSuccess(level.isClientSide);
             }
         }
 
         // =========================================================================
-        // 4. НАСТРОЙКА ПОЗЫ ДОЛОТОМ ИЛИ УСТАНОВКА ПЛАСТИНЫ
+        // 4. РќРђРЎРўР РћР™РљРђ РџРћР—Р« Р”РћР›РћРўРћРњ РР›Р РЈРЎРўРђРќРћР’РљРђ РџР›РђРЎРўРРќР«
         // =========================================================================
         if (stand.getMode() != SculptStandBlockEntity.StandMode.EMPTY) {
-            // Если предмет запечатан — долото переключает хват (1/2 руки), а пластины блокируются
-            if (stand.isPoseCustomizationOnly()) {
-                if (held.getItem() instanceof ChiselItem) {
-                    if (!level.isClientSide) {
+            if (held.getItem() instanceof ChiselItem) {
+                if (!level.isClientSide) {
+                    if (stand.isPoseCustomizationOnly()) {
                         stand.toggleTwoHanded();
                         player.displayClientMessage(Component.literal(stand.getCurrentPose().twoHanded ?
                                 "§a[Стойка] Переключено на ДВУРУЧНЫЙ хват!" :
                                 "§e[Стойка] Переключено на ОДНОРУЧНЫЙ хват."), true);
                         level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.5f, 1.5f);
+                    } else {
+                        boolean sym = !stand.isSymmetryMode();
+                        stand.setSymmetryMode(sym);
+                        player.displayClientMessage(sym ?
+                                Component.translatable("message.customsmith.symmetry_enabled") :
+                                Component.translatable("message.customsmith.symmetry_disabled"), true);
+                        level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.5f, 1.4f);
                     }
-                    return InteractionResult.sidedSuccess(level.isClientSide);
                 }
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            }
+
+            if (stand.isPoseCustomizationOnly()) {
                 if (held.getItem() instanceof PlateItem) {
                     if (!level.isClientSide) {
-                        player.displayClientMessage(Component.literal("§c[Кузница] Форма предмета уже запечатана! Доступна только смена позы и хвата."), true);
+                        player.displayClientMessage(Component.literal("В§c[РљСѓР·РЅРёС†Р°] Р¤РѕСЂРјР° РїСЂРµРґРјРµС‚Р° СѓР¶Рµ Р·Р°РїРµС‡Р°С‚Р°РЅР°! Р”РѕСЃС‚СѓРїРЅР° С‚РѕР»СЊРєРѕ СЃРјРµРЅР° РїРѕР·С‹ Рё С…РІР°С‚Р°."), true);
                     }
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }
@@ -358,7 +392,7 @@ public class SculptStandBlock extends BaseEntityBlock {
             if (held.getItem() instanceof PlateItem) {
                 if (!level.isClientSide) {
                     if (!PlateItem.hasQuality(held)) {
-                        player.displayClientMessage(Component.literal("§c[Кузница] Пластина не исследована! Возьмите подзорную трубу в левую руку и зажмите ПКМ для оценки качества."), true);
+                        player.displayClientMessage(Component.literal("В§c[РљСѓР·РЅРёС†Р°] РџР»Р°СЃС‚РёРЅР° РЅРµ РёСЃСЃР»РµРґРѕРІР°РЅР°! Р’РѕР·СЊРјРёС‚Рµ РїРѕРґР·РѕСЂРЅСѓСЋ С‚СЂСѓР±Сѓ РІ Р»РµРІСѓСЋ СЂСѓРєСѓ Рё Р·Р°Р¶РјРёС‚Рµ РџРљРњ РґР»СЏ РѕС†РµРЅРєРё РєР°С‡РµСЃС‚РІР°."), true);
                         level.playSound(null, pos, SoundEvents.VILLAGER_NO, SoundSource.BLOCKS, 0.7f, 1.0f);
                         return InteractionResult.CONSUME;
                     }
@@ -372,7 +406,7 @@ public class SculptStandBlock extends BaseEntityBlock {
                         return InteractionResult.CONSUME;
                     }
 
-                    // Выбираем сетку для редактирования (для оружия "weapon", для брони основная деталь)
+                    // Р’С‹Р±РёСЂР°РµРј СЃРµС‚РєСѓ РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ (РґР»СЏ РѕСЂСѓР¶РёСЏ "weapon", РґР»СЏ Р±СЂРѕРЅРё РѕСЃРЅРѕРІРЅР°СЏ РґРµС‚Р°Р»СЊ)
                     String targetPart = stand.getMode() == SculptStandBlockEntity.StandMode.WEAPON ? "weapon" :
                             (stand.getMode() == SculptStandBlockEntity.StandMode.HELMET ? "head" :
                             (stand.getMode() == SculptStandBlockEntity.StandMode.CHESTPLATE ? "body" :
@@ -412,20 +446,20 @@ public class SculptStandBlock extends BaseEntityBlock {
 
     @Override
     public void attack(BlockState state, Level level, BlockPos pos, Player player) {
-        // ЛКМ резцом: скалывание 1x1x1 вокселя (с учетом симметрии)
+        // Р›РљРњ СЂРµР·С†РѕРј: СЃРєР°Р»С‹РІР°РЅРёРµ 1x1x1 РІРѕРєСЃРµР»СЏ (СЃ СѓС‡РµС‚РѕРј СЃРёРјРјРµС‚СЂРёРё)
         ItemStack held = player.getMainHandItem();
         if (held.getItem() instanceof ChiselItem) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof SculptStandBlockEntity stand && stand.getMode() != SculptStandBlockEntity.StandMode.EMPTY) {
                 if (!level.isClientSide) {
                     if (stand.isPoseCustomizationOnly()) {
-                        player.displayClientMessage(Component.literal("§c[Кузница] Форма предмета запечатана! Изменение вокселей невозможно."), true);
+                        player.displayClientMessage(Component.literal("В§c[РљСѓР·РЅРёС†Р°] Р¤РѕСЂРјР° РїСЂРµРґРјРµС‚Р° Р·Р°РїРµС‡Р°С‚Р°РЅР°! РР·РјРµРЅРµРЅРёРµ РІРѕРєСЃРµР»РµР№ РЅРµРІРѕР·РјРѕР¶РЅРѕ."), true);
                         return;
                     }
 
                     String targetPart = stand.getMode() == SculptStandBlockEntity.StandMode.WEAPON ? "weapon" : "head";
                     VoxelGrid g = stand.getGrid(targetPart);
-                    // Скалывание
+                    // РЎРєР°Р»С‹РІР°РЅРёРµ
                     if (stand.isSymmetryMode()) {
                         SymmetryHelper.removeSymmetricalX(g, 16, 20, 15);
                     } else {

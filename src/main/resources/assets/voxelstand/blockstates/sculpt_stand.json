@@ -1,8 +1,94 @@
-{
-  "variants": {
-    "facing=north": { "model": "voxelstand:block/sculpt_stand" },
-    "facing=east":  { "model": "voxelstand:block/sculpt_stand", "y": 90 },
-    "facing=south": { "model": "voxelstand:block/sculpt_stand", "y": 180 },
-    "facing=west":  { "model": "voxelstand:block/sculpt_stand", "y": 270 }
-  }
+﻿{
+    "variants":  {
+                     "facing=north,mode=empty":  {
+                                                     "model":  "voxelstand:block/sculpt_stand_empty"
+                                                 },
+                     "facing=north,mode=weapon":  {
+                                                      "model":  "voxelstand:block/sculpt_stand_weapon"
+                                                  },
+                     "facing=north,mode=helmet":  {
+                                                      "model":  "voxelstand:block/sculpt_stand_helmet"
+                                                  },
+                     "facing=north,mode=chestplate":  {
+                                                          "model":  "voxelstand:block/sculpt_stand_chestplate"
+                                                      },
+                     "facing=north,mode=leggings":  {
+                                                        "model":  "voxelstand:block/sculpt_stand_leggings"
+                                                    },
+                     "facing=north,mode=boots":  {
+                                                     "model":  "voxelstand:block/sculpt_stand_boots"
+                                                 },
+                     "facing=east,mode=empty":  {
+                                                    "model":  "voxelstand:block/sculpt_stand_empty",
+                                                    "y":  90
+                                                },
+                     "facing=east,mode=weapon":  {
+                                                     "model":  "voxelstand:block/sculpt_stand_weapon",
+                                                     "y":  90
+                                                 },
+                     "facing=east,mode=helmet":  {
+                                                     "model":  "voxelstand:block/sculpt_stand_helmet",
+                                                     "y":  90
+                                                 },
+                     "facing=east,mode=chestplate":  {
+                                                         "model":  "voxelstand:block/sculpt_stand_chestplate",
+                                                         "y":  90
+                                                     },
+                     "facing=east,mode=leggings":  {
+                                                       "model":  "voxelstand:block/sculpt_stand_leggings",
+                                                       "y":  90
+                                                   },
+                     "facing=east,mode=boots":  {
+                                                    "model":  "voxelstand:block/sculpt_stand_boots",
+                                                    "y":  90
+                                                },
+                     "facing=south,mode=empty":  {
+                                                     "model":  "voxelstand:block/sculpt_stand_empty",
+                                                     "y":  180
+                                                 },
+                     "facing=south,mode=weapon":  {
+                                                      "model":  "voxelstand:block/sculpt_stand_weapon",
+                                                      "y":  180
+                                                  },
+                     "facing=south,mode=helmet":  {
+                                                      "model":  "voxelstand:block/sculpt_stand_helmet",
+                                                      "y":  180
+                                                  },
+                     "facing=south,mode=chestplate":  {
+                                                          "model":  "voxelstand:block/sculpt_stand_chestplate",
+                                                          "y":  180
+                                                      },
+                     "facing=south,mode=leggings":  {
+                                                        "model":  "voxelstand:block/sculpt_stand_leggings",
+                                                        "y":  180
+                                                    },
+                     "facing=south,mode=boots":  {
+                                                     "model":  "voxelstand:block/sculpt_stand_boots",
+                                                     "y":  180
+                                                 },
+                     "facing=west,mode=empty":  {
+                                                    "model":  "voxelstand:block/sculpt_stand_empty",
+                                                    "y":  270
+                                                },
+                     "facing=west,mode=weapon":  {
+                                                     "model":  "voxelstand:block/sculpt_stand_weapon",
+                                                     "y":  270
+                                                 },
+                     "facing=west,mode=helmet":  {
+                                                     "model":  "voxelstand:block/sculpt_stand_helmet",
+                                                     "y":  270
+                                                 },
+                     "facing=west,mode=chestplate":  {
+                                                         "model":  "voxelstand:block/sculpt_stand_chestplate",
+                                                         "y":  270
+                                                     },
+                     "facing=west,mode=leggings":  {
+                                                       "model":  "voxelstand:block/sculpt_stand_leggings",
+                                                       "y":  270
+                                                   },
+                     "facing=west,mode=boots":  {
+                                                    "model":  "voxelstand:block/sculpt_stand_boots",
+                                                    "y":  270
+                                                }
+                 }
 }
