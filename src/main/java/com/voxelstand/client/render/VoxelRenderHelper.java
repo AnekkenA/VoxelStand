@@ -25,6 +25,18 @@ public final class VoxelRenderHelper {
         float u0 = sprite.getU0(), u1 = sprite.getU1();
         float v0 = sprite.getV0(), v1 = sprite.getV1();
 
+        // Тонкое микро-затенение по координатам вокселя (эффект пиксель-арта Minecraft)
+        int hash = ((int)Math.abs(x1 * 64 + y1 * 128 + z1 * 256)) & 3;
+        float shade = switch (hash) {
+            case 0 -> 0.93f;
+            case 1 -> 1.00f;
+            case 2 -> 1.06f;
+            default -> 0.97f;
+        };
+        r = Math.min(1.0f, r * shade);
+        g = Math.min(1.0f, g * shade);
+        b = Math.min(1.0f, b * shade);
+
         switch (dir) {
             case UP -> {
                 builder.addVertex(mat, x1, y1, z1).setColor(r, g, b, alpha).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(0, 1, 0);

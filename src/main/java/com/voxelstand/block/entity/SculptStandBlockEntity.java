@@ -77,9 +77,9 @@ public class SculptStandBlockEntity extends BlockEntity {
 
     public String getQualityName() {
         float mult = calculateQualityMultiplier();
-        if (mult >= 1.25f) return "Р§РёСЃС‚РѕРµ";
-        if (mult >= 1.10f) return "РљСЂРµРїРєРѕРµ";
-        return "РћР±С‹С‡РЅРѕРµ";
+        if (mult >= 1.25f) return "Чистое";
+        if (mult >= 1.10f) return "Крепкое";
+        return "Обычное";
     }
 
     public int getPlatesNormal() { return platesNormal; }

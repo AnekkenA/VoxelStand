@@ -7,6 +7,7 @@ import com.voxelstand.voxel.VoxelCompressor;
 import com.voxelstand.voxel.VoxelGrid;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -26,7 +27,6 @@ import java.util.Map;
  * Привязывает отрендеренный меш прямо к соответствующим костям HumanoidModel.
  */
 public class CustomArmorLayerRenderer {
-    // Клиентский кэш запеченных мешей для максимального FPS
     private static final Map<String, List<VoxelQuad>> MESH_CACHE = new HashMap<>();
 
     public static void renderArmorPiece(PoseStack poseStack, MultiBufferSource bufferSource,
@@ -39,33 +39,35 @@ public class CustomArmorLayerRenderer {
         CompoundTag modelTag = com.voxelstand.api.VoxelDataHelper.getCustomData(stack).getCompound(VoxelConstants.NBT_VOXEL_MODEL);
 
         switch (slot) {
-            case HEAD -> renderPartToBone(poseStack, bufferSource, modelTag, "head", model.head, packedLight);
+            case HEAD -> renderPartToBone(poseStack, bufferSource, modelTag, "head", model.head, 0, -0.25f, 0, packedLight);
             case CHEST -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "body", model.body, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "left_arm", model.leftArm, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "right_arm", model.rightArm, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "body", model.body, 0, 0.35f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "left_arm", model.leftArm, 0.05f, 0.25f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "right_arm", model.rightArm, -0.05f, 0.25f, 0, packedLight);
             }
             case LEGS -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "pelvis", model.body, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "left_leg", model.leftLeg, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "right_leg", model.rightLeg, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "pelvis", model.body, 0, 0.55f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "left_leg", model.leftLeg, 0, 0.35f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "right_leg", model.rightLeg, 0, 0.35f, 0, packedLight);
             }
             case FEET -> {
-                renderPartToBone(poseStack, bufferSource, modelTag, "left_boot", model.leftLeg, packedLight);
-                renderPartToBone(poseStack, bufferSource, modelTag, "right_boot", model.rightLeg, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "left_boot", model.leftLeg, 0, 0.55f, 0, packedLight);
+                renderPartToBone(poseStack, bufferSource, modelTag, "right_boot", model.rightLeg, 0, 0.55f, 0, packedLight);
             }
         }
     }
 
     private static void renderPartToBone(PoseStack poseStack, MultiBufferSource bufferSource,
-                                         CompoundTag modelTag, String partName, ModelPart bone, int packedLight) {
+                                         CompoundTag modelTag, String partName, ModelPart bone,
+                                         float offX, float offY, float offZ, int packedLight) {
         if (!modelTag.contains(partName)) return;
 
         poseStack.pushPose();
         bone.translateAndRotate(poseStack);
 
-        // Масштаб: 32 вокселя соответствуют стандартным пропорциям кости
-        poseStack.scale(0.5f, 0.5f, 0.5f);
+        poseStack.translate(offX, offY, offZ);
+        // Масштаб: 32 вокселя соответствуют 16 пикселям игрока
+        poseStack.scale(0.55f, -0.55f, 0.55f);
         poseStack.translate(-0.5, -0.5, -0.5);
 
         byte[] data = modelTag.getByteArray(partName);

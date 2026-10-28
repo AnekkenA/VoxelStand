@@ -4,7 +4,8 @@ import net.minecraft.world.item.*;
 
 /**
  * Генератор начальной воксельной модели при первой установке ванильного предмета на стойку.
- * Преобразует ванильный предмет (меч, кирасу, шлем и т.д.) в готовый базовый 3D воксельный каркас.
+ * Создает детализированный, многотональный 3D воксельный каркас с градиентами,
+ * акцентными контурами и аутентичной эстетикой Minecraft.
  */
 public final class AutoVoxelizer {
     private AutoVoxelizer() {}
@@ -30,47 +31,95 @@ public final class AutoVoxelizer {
     }
 
     /**
-     * Авто-вокселизация оружия (мечи, топоры).
-     * Размещает рукоять строго в месте соломенного хвата (Y=6..12),
-     * гарду над хватом (Y=12..14) и лезвие (Y=14..30).
+     * Палитра материалов для многотонального моделирования (база, лезвие/кромка, глубина, акцент).
      */
-    public static void voxelizeWeapon(ItemStack stack, VoxelGrid grid) {
-        grid.clear();
-        VoxelMaterial bladeMat = detectBaseMaterial(stack);
-        VoxelMaterial hiltMat = VoxelMaterial.DARK_WOOD;
-        VoxelMaterial guardMat = bladeMat;
-        if (bladeMat == VoxelMaterial.OAK || bladeMat == VoxelMaterial.LIGHT_WOOD) {
-            guardMat = VoxelMaterial.DARK_WOOD;
-        } else if (bladeMat == VoxelMaterial.DEEPSLATE || bladeMat == VoxelMaterial.FLINT) {
-            guardMat = VoxelMaterial.DEEPSLATE;
-        } else if (bladeMat == VoxelMaterial.GOLD) {
-            guardMat = VoxelMaterial.GOLD;
-        } else if (bladeMat == VoxelMaterial.NETHERITE) {
-            guardMat = VoxelMaterial.NETHERITE;
-        } else if (bladeMat == VoxelMaterial.DIAMOND) {
-            guardMat = VoxelMaterial.DIAMOND;
-        } else {
-            guardMat = VoxelMaterial.IRON;
-        }
+    private static class MaterialPalette {
+        final byte base;
+        final byte edge;
+        final byte shadow;
+        final byte accent;
+        final byte grip;
 
-        byte bladeId = bladeMat.getId();
-        byte hiltId = hiltMat.getId();
-        byte guardId = guardMat.getId();
-
-        // 1. Навершие рукояти (Pommel): Y=4..6, X=15..16, Z=15..16
-        for (int x = 14; x <= 17; x++) {
-            for (int y = 4; y <= 6; y++) {
-                for (int z = 14; z <= 17; z++) {
-                    grid.set(x, y, z, guardId);
+        MaterialPalette(VoxelMaterial baseMat) {
+            this.grip = VoxelMaterial.DARK_WOOD.getId();
+            switch (baseMat) {
+                case DEEPSLATE -> { // Камень
+                    this.base = VoxelMaterial.DEEPSLATE.getId();
+                    this.edge = VoxelMaterial.FLINT.getId();
+                    this.shadow = VoxelMaterial.OBSIDIAN.getId();
+                    this.accent = VoxelMaterial.QUARTZ.getId();
+                }
+                case IRON -> { // Железо
+                    this.base = VoxelMaterial.IRON.getId();
+                    this.edge = VoxelMaterial.QUARTZ.getId();
+                    this.shadow = VoxelMaterial.FLINT.getId();
+                    this.accent = VoxelMaterial.GOLD.getId();
+                }
+                case DIAMOND -> { // Алмаз
+                    this.base = VoxelMaterial.DIAMOND.getId();
+                    this.edge = VoxelMaterial.SEA_LANTERN.getId();
+                    this.shadow = VoxelMaterial.DARK_PRISMARINE.getId();
+                    this.accent = VoxelMaterial.LAPIS.getId();
+                }
+                case NETHERITE -> { // Незерит
+                    this.base = VoxelMaterial.NETHERITE.getId();
+                    this.edge = VoxelMaterial.DEEPSLATE.getId();
+                    this.shadow = VoxelMaterial.OBSIDIAN.getId();
+                    this.accent = VoxelMaterial.GOLD.getId();
+                }
+                case GOLD -> { // Золото
+                    this.base = VoxelMaterial.GOLD.getId();
+                    this.edge = VoxelMaterial.QUARTZ.getId();
+                    this.shadow = VoxelMaterial.BLAZE.getId();
+                    this.accent = VoxelMaterial.REDSTONE.getId();
+                }
+                case COPPER -> { // Медь
+                    this.base = VoxelMaterial.COPPER.getId();
+                    this.edge = VoxelMaterial.LIGHT_WOOD.getId();
+                    this.shadow = VoxelMaterial.DARK_WOOD.getId();
+                    this.accent = VoxelMaterial.WARPED.getId();
+                }
+                case LEATHER -> { // Кожа
+                    this.base = VoxelMaterial.LEATHER.getId();
+                    this.edge = VoxelMaterial.LIGHT_WOOD.getId();
+                    this.shadow = VoxelMaterial.DARK_WOOD.getId();
+                    this.accent = VoxelMaterial.IRON.getId();
+                }
+                default -> { // Дерево и др.
+                    this.base = VoxelMaterial.OAK.getId();
+                    this.edge = VoxelMaterial.LIGHT_WOOD.getId();
+                    this.shadow = VoxelMaterial.DARK_WOOD.getId();
+                    this.accent = VoxelMaterial.FLINT.getId();
                 }
             }
         }
+    }
 
-        // 2. Рукоять (Hilt): Y=7..12, X=15..16, Z=15..16 (внутри соломенного кулака)
+    /**
+     * Авто-вокселизация оружия (мечи, топоры).
+     * Размещает рукоять строго в месте соломенного хвата (Y=6..12),
+     * гарду над хватом (Y=12..14) и лезвие с выразительной двухцветной заточкой (Y=14..30).
+     */
+    public static void voxelizeWeapon(ItemStack stack, VoxelGrid grid) {
+        grid.clear();
+        MaterialPalette pal = new MaterialPalette(detectBaseMaterial(stack));
+
+        // 1. Навершие рукояти (Pommel): Y=4..6, X=14..17, Z=14..17
+        for (int x = 14; x <= 17; x++) {
+            for (int y = 4; y <= 6; y++) {
+                for (int z = 14; z <= 17; z++) {
+                    grid.set(x, y, z, pal.base);
+                }
+            }
+        }
+        grid.set(15, 4, 15, pal.accent);
+        grid.set(16, 4, 16, pal.accent);
+
+        // 2. Рукоять (Hilt): Y=7..12, X=15..16, Z=15..16 (внутри соломенного хвата)
         for (int x = 15; x <= 16; x++) {
             for (int y = 7; y <= 12; y++) {
                 for (int z = 15; z <= 16; z++) {
-                    grid.set(x, y, z, hiltId);
+                    grid.set(x, y, z, (y % 2 == 0) ? pal.grip : pal.shadow);
                 }
             }
         }
@@ -79,26 +128,34 @@ public final class AutoVoxelizer {
         for (int x = 9; x <= 22; x++) {
             for (int y = 13; y <= 14; y++) {
                 for (int z = 14; z <= 17; z++) {
-                    grid.set(x, y, z, guardId);
+                    byte mat = (x == 9 || x == 10 || x == 21 || x == 22) ? pal.accent : pal.base;
+                    grid.set(x, y, z, mat);
                 }
             }
         }
 
-        // 4. Лезвие (Blade): Y=15..30, ширина X=14..17, толщина Z=15..16
+        // 4. Лезвие (Blade): Y=15..28, ширина X=14..17, толщина Z=15..16
         for (int y = 15; y <= 28; y++) {
-            for (int x = 14; x <= 17; x++) {
-                for (int z = 15; z <= 16; z++) {
-                    grid.set(x, y, z, bladeId);
-                }
+            // Режущие кромки (слева X=14, справа X=17) — светлый заточенный материал
+            for (int z = 15; z <= 16; z++) {
+                grid.set(14, y, z, pal.edge);
+                grid.set(17, y, z, pal.edge);
+            }
+
+            // Центральное ребро / дол (X=15..16) — базовый металл и теневая линия дола
+            for (int z = 15; z <= 16; z++) {
+                byte centerMat = (y >= 16 && y <= 24 && z == 15) ? pal.shadow : pal.base;
+                grid.set(15, y, z, centerMat);
+                grid.set(16, y, z, centerMat);
             }
         }
 
-        // Заостренный кончик клинка: Y=29..30
+        // 5. Заостренный кончик клинка: Y=29..30
         for (int z = 15; z <= 16; z++) {
-            grid.set(15, 29, z, bladeId);
-            grid.set(16, 29, z, bladeId);
-            grid.set(15, 30, z, bladeId);
-            grid.set(16, 30, z, bladeId);
+            grid.set(15, 29, z, pal.edge);
+            grid.set(16, 29, z, pal.edge);
+            grid.set(15, 30, z, pal.accent);
+            grid.set(16, 30, z, pal.accent);
         }
     }
 
@@ -107,36 +164,35 @@ public final class AutoVoxelizer {
      */
     public static void voxelizeHelmet(ItemStack stack, VoxelGrid headGrid) {
         headGrid.clear();
-        byte matId = detectBaseMaterial(stack).getId();
+        MaterialPalette pal = new MaterialPalette(detectBaseMaterial(stack));
 
         // Купол шлема (сверху и по бокам головы 16x16)
-        // Голова занимает X=8..23, Y=8..23, Z=8..23
-        // Делаем купол толщиной в 1 воксель снаружи:
         for (int x = 7; x <= 24; x++) {
             for (int z = 7; z <= 24; z++) {
-                headGrid.set(x, 24, z, matId); // Макушка
-                headGrid.set(x, 23, z, matId);
+                byte mat = (x == 15 || x == 16) ? pal.accent : pal.base;
+                headGrid.set(x, 24, z, mat); // Макушка
+                headGrid.set(x, 23, z, pal.base);
             }
         }
 
         // Затылок и виски
         for (int y = 12; y <= 22; y++) {
             for (int x = 7; x <= 24; x++) {
-                headGrid.set(x, y, 7, matId); // Затылок
-                headGrid.set(7, y, x, matId); // Левый висок
-                headGrid.set(24, y, x, matId); // Правый висок
+                byte edgeCheck = (y == 12 || x == 7 || x == 24) ? pal.edge : pal.base;
+                headGrid.set(x, y, 7, edgeCheck); // Затылок
+                headGrid.set(7, y, x, edgeCheck); // Левый висок
+                headGrid.set(24, y, x, edgeCheck); // Правый висок
             }
         }
 
-        // Лобная пластина и наносник над глазами (глаза на Y=14..16)
+        // Лобная пластина и наносник над глазами
         for (int x = 8; x <= 23; x++) {
-            headGrid.set(x, 18, 24, matId); // Лоб
-            headGrid.set(x, 17, 24, matId);
+            headGrid.set(x, 18, 24, pal.edge); // Лоб
+            headGrid.set(x, 17, 24, pal.base);
         }
-        // Наносник между глазами (X=15..16, Y=14..16)
         for (int y = 13; y <= 16; y++) {
-            headGrid.set(15, y, 24, matId);
-            headGrid.set(16, y, 24, matId);
+            headGrid.set(15, y, 24, pal.accent);
+            headGrid.set(16, y, 24, pal.accent);
         }
     }
 
@@ -147,39 +203,47 @@ public final class AutoVoxelizer {
         bodyGrid.clear();
         leftArmGrid.clear();
         rightArmGrid.clear();
-        byte matId = detectBaseMaterial(stack).getId();
+        MaterialPalette pal = new MaterialPalette(detectBaseMaterial(stack));
 
         // Кираса на торс: X=9..22, Y=8..24, Z=12..19
         for (int y = 8; y <= 24; y++) {
             for (int x = 9; x <= 22; x++) {
-                bodyGrid.set(x, y, 12, matId); // Спина
-                bodyGrid.set(x, y, 19, matId); // Нагрудник (грудь)
+                byte bMat = (y == 8 || y == 24 || x == 9 || x == 22) ? pal.edge : pal.base;
+                bodyGrid.set(x, y, 12, bMat); // Спина
+                bodyGrid.set(x, y, 19, bMat); // Нагрудник (грудь)
             }
             for (int z = 12; z <= 19; z++) {
-                bodyGrid.set(9, y, z, matId);  // Бок левый
-                bodyGrid.set(22, y, z, matId); // Бок правый
+                bodyGrid.set(9, y, z, pal.shadow);  // Бок левый
+                bodyGrid.set(22, y, z, pal.shadow); // Бок правый
             }
         }
 
-        // Наплечники на левой и правой руке (контурная оболочка пластины)
+        // Центральная эмблема / нагрудный гребень
+        for (int y = 14; y <= 19; y++) {
+            bodyGrid.set(15, y, 20, pal.accent);
+            bodyGrid.set(16, y, 20, pal.accent);
+        }
+
+        // Наплечники на левой и правой руке
         for (int y = 18; y <= 24; y++) {
             for (int x = 11; x <= 20; x++) {
-                leftArmGrid.set(x, y, 11, matId);
-                leftArmGrid.set(x, y, 20, matId);
-                rightArmGrid.set(x, y, 11, matId);
-                rightArmGrid.set(x, y, 20, matId);
+                byte aMat = (y == 24) ? pal.accent : pal.base;
+                leftArmGrid.set(x, y, 11, aMat);
+                leftArmGrid.set(x, y, 20, aMat);
+                rightArmGrid.set(x, y, 11, aMat);
+                rightArmGrid.set(x, y, 20, aMat);
             }
             for (int z = 11; z <= 20; z++) {
-                leftArmGrid.set(11, y, z, matId);
-                leftArmGrid.set(20, y, z, matId);
-                rightArmGrid.set(11, y, z, matId);
-                rightArmGrid.set(20, y, z, matId);
+                leftArmGrid.set(11, y, z, pal.edge);
+                leftArmGrid.set(20, y, z, pal.edge);
+                rightArmGrid.set(11, y, z, pal.edge);
+                rightArmGrid.set(20, y, z, pal.edge);
             }
         }
         for (int x = 11; x <= 20; x++) {
             for (int z = 11; z <= 20; z++) {
-                leftArmGrid.set(x, 24, z, matId);
-                rightArmGrid.set(x, 24, z, matId);
+                leftArmGrid.set(x, 24, z, pal.accent);
+                rightArmGrid.set(x, 24, z, pal.accent);
             }
         }
     }
@@ -191,21 +255,26 @@ public final class AutoVoxelizer {
         pelvisGrid.clear();
         leftLegGrid.clear();
         rightLegGrid.clear();
-        byte matId = detectBaseMaterial(stack).getId();
+        MaterialPalette pal = new MaterialPalette(detectBaseMaterial(stack));
 
         // Пояс (Pelvis): Y=20..26, X=10..21, Z=12..19
         for (int y = 20; y <= 26; y++) {
             for (int x = 10; x <= 21; x++) {
-                pelvisGrid.set(x, y, 12, matId);
-                pelvisGrid.set(x, y, 19, matId);
+                byte pMat = (y == 25 || y == 26) ? pal.edge : pal.base;
+                pelvisGrid.set(x, y, 12, pMat);
+                pelvisGrid.set(x, y, 19, pMat);
             }
         }
+        // Пряжка ремня
+        pelvisGrid.set(15, 23, 20, pal.accent);
+        pelvisGrid.set(16, 23, 20, pal.accent);
 
         // Набедренники и наколенники
         for (int y = 10; y <= 24; y++) {
             for (int x = 11; x <= 20; x++) {
-                leftLegGrid.set(x, y, 19, matId);
-                rightLegGrid.set(x, y, 19, matId);
+                byte legMat = (y >= 14 && y <= 16) ? pal.accent : pal.base; // Наколенник
+                leftLegGrid.set(x, y, 19, legMat);
+                rightLegGrid.set(x, y, 19, legMat);
             }
         }
     }
@@ -216,143 +285,60 @@ public final class AutoVoxelizer {
     public static void voxelizeBoots(ItemStack stack, VoxelGrid leftBootGrid, VoxelGrid rightBootGrid) {
         leftBootGrid.clear();
         rightBootGrid.clear();
-        byte matId = detectBaseMaterial(stack).getId();
+        MaterialPalette pal = new MaterialPalette(detectBaseMaterial(stack));
 
-        // Подошва: Y=0
-        for (int x = 10; x <= 21; x++) {
-            for (int z = 9; z <= 22; z++) {
-                leftBootGrid.set(x, 0, z, matId);
-                rightBootGrid.set(x, 0, z, matId);
+        // Подошва и носок
+        for (int x = 11; x <= 20; x++) {
+            for (int z = 10; z <= 22; z++) {
+                leftBootGrid.set(x, 1, z, pal.shadow);
+                rightBootGrid.set(x, 1, z, pal.shadow);
             }
         }
-        // Стенки сапога: Y=1..8
-        for (int y = 1; y <= 8; y++) {
-            for (int x = 10; x <= 21; x++) {
-                leftBootGrid.set(x, y, 9, matId);
-                leftBootGrid.set(x, y, 22, matId);
-                rightBootGrid.set(x, y, 9, matId);
-                rightBootGrid.set(x, y, 22, matId);
-            }
-            for (int z = 9; z <= 22; z++) {
-                leftBootGrid.set(10, y, z, matId);
-                leftBootGrid.set(21, y, z, matId);
-                rightBootGrid.set(10, y, z, matId);
-                rightBootGrid.set(21, y, z, matId);
+
+        // Голенище
+        for (int y = 2; y <= 10; y++) {
+            for (int x = 11; x <= 20; x++) {
+                byte bMat = (y == 10) ? pal.edge : pal.base;
+                leftBootGrid.set(x, y, 11, bMat);
+                leftBootGrid.set(x, y, 20, bMat);
+                rightBootGrid.set(x, y, 11, bMat);
+                rightBootGrid.set(x, y, 20, bMat);
             }
         }
     }
 
-    /**
-     * Авто-вокселизация щита.
-     * Деревянный каркас с металлической окантовкой и центральным умбоном.
-     */
     public static void voxelizeShield(ItemStack stack, VoxelGrid grid) {
         grid.clear();
-        byte woodId = VoxelMaterial.OAK.getId();
-        byte metalId = detectBaseMaterial(stack).getId();
-        if (metalId == VoxelMaterial.OAK.getId()) {
-            metalId = VoxelMaterial.IRON.getId();
-        }
-
-        // 1. Деревянное поле щита: X=9..22, Y=6..25, Z=15..16
-        for (int x = 9; x <= 22; x++) {
-            for (int y = 6; y <= 25; y++) {
-                grid.set(x, y, 15, woodId);
-                grid.set(x, y, 16, woodId);
+        MaterialPalette pal = new MaterialPalette(detectBaseMaterial(stack));
+        for (int x = 6; x <= 25; x++) {
+            for (int y = 4; y <= 27; y++) {
+                byte sMat = (x == 6 || x == 25 || y == 4 || y == 27) ? pal.edge : pal.base;
+                grid.set(x, y, 16, sMat);
             }
         }
-
-        // 2. Металлическая окантовка щита
-        for (int y = 5; y <= 26; y++) {
-            grid.set(8, y, 16, metalId);
-            grid.set(23, y, 16, metalId);
-        }
-        for (int x = 8; x <= 23; x++) {
-            grid.set(x, 26, 16, metalId);
-            grid.set(x, 5, 16, metalId);
-        }
-
-        // 3. Металлический умбон по центру: X=14..17, Y=14..17, Z=17
-        for (int x = 14; x <= 17; x++) {
-            for (int y = 14; y <= 17; y++) {
-                grid.set(x, y, 17, metalId);
-            }
-        }
+        grid.set(15, 15, 17, pal.accent);
+        grid.set(16, 15, 17, pal.accent);
     }
 
-    /**
-     * Авто-вокселизация лука.
-     * Изогнутая деревянная дуга с белой тетивой.
-     */
     public static void voxelizeBow(ItemStack stack, VoxelGrid grid) {
         grid.clear();
-        byte woodId = detectBaseMaterial(stack).getId();
-        byte stringId = VoxelMaterial.QUARTZ.getId();
-
-        // 1. Центральный хват: X=15..16, Y=14..17, Z=16
-        for (int y = 14; y <= 17; y++) {
-            grid.set(15, y, 16, woodId);
-            grid.set(16, y, 16, woodId);
-        }
-
-        // 2. Верхнее плечо дуги
-        for (int y = 18; y <= 22; y++) {
-            grid.set(15, y, 15, woodId);
-            grid.set(16, y, 15, woodId);
-        }
-        for (int y = 23; y <= 27; y++) {
-            grid.set(15, y, 14, woodId);
-            grid.set(16, y, 14, woodId);
-        }
-
-        // 3. Нижнее плечо дуги
-        for (int y = 9; y <= 13; y++) {
-            grid.set(15, y, 15, woodId);
-            grid.set(16, y, 15, woodId);
-        }
-        for (int y = 4; y <= 8; y++) {
-            grid.set(15, y, 14, woodId);
-            grid.set(16, y, 14, woodId);
-        }
-
-        // 4. Тетива (прямая линия от верхнего до нижнего наконечника по Z=17)
-        for (int y = 4; y <= 27; y++) {
-            grid.set(15, y, 17, stringId);
+        MaterialPalette pal = new MaterialPalette(VoxelMaterial.OAK);
+        for (int y = 4; y <= 28; y++) {
+            grid.set(15, y, 15, pal.base);
+            grid.set(16, y, 15, pal.base);
+            grid.set(15, y, 17, pal.accent); // Тетива
         }
     }
 
-    /**
-     * Авто-вокселизация арбалета.
-     * Деревянное ложе, поперечная дуга и натянутая тетива.
-     */
     public static void voxelizeCrossbow(ItemStack stack, VoxelGrid grid) {
         grid.clear();
-        byte woodId = VoxelMaterial.DARK_WOOD.getId();
-        byte ironId = VoxelMaterial.IRON.getId();
-        byte stringId = VoxelMaterial.QUARTZ.getId();
-
-        // 1. Ложе (приклад и ствол): Z=8..25, X=15..16, Y=15..16
-        for (int z = 8; z <= 25; z++) {
-            grid.set(15, 15, z, woodId);
-            grid.set(16, 15, z, woodId);
-            grid.set(15, 16, z, woodId);
-            grid.set(16, 16, z, woodId);
+        MaterialPalette pal = new MaterialPalette(VoxelMaterial.DARK_WOOD);
+        for (int z = 6; z <= 26; z++) {
+            grid.set(15, 15, z, pal.base);
+            grid.set(16, 15, z, pal.base);
         }
-
-        // 2. Поперечная дуга (Prod): Z=24, X=7..24, Y=15..16
-        for (int x = 7; x <= 24; x++) {
-            grid.set(x, 15, 24, ironId);
-            grid.set(x, 16, 24, ironId);
-        }
-
-        // 3. Передняя скоба (Стремя): Z=26, X=13..18
-        for (int x = 13; x <= 18; x++) {
-            grid.set(x, 15, 26, ironId);
-        }
-
-        // 4. Тетива арбалета: X=7..24, Z=20, Y=16
-        for (int x = 7; x <= 24; x++) {
-            grid.set(x, 16, 20, stringId);
+        for (int x = 8; x <= 23; x++) {
+            grid.set(x, 15, 8, pal.edge);
         }
     }
 }

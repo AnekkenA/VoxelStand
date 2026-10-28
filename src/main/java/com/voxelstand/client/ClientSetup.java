@@ -27,6 +27,17 @@ public class ClientSetup {
     }
 
     @SubscribeEvent
+    public static void registerLayers(EntityRenderersEvent.AddLayers event) {
+        // Добавление слоя воксельной кастомной брони для всех моделей игроков (default и slim)
+        for (net.minecraft.client.resources.PlayerSkin.Model skin : event.getSkins()) {
+            net.minecraft.client.renderer.entity.player.PlayerRenderer renderer = event.getSkin(skin);
+            if (renderer != null) {
+                renderer.addLayer(new com.voxelstand.client.render.CustomArmorLayer<>(renderer));
+            }
+        }
+    }
+
+    @SubscribeEvent
     public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
         // Динамическая окраска пластин в точный RGB-цвет материала (ванильного или модового из ~800 модов)
         event.register((stack, tintIndex) -> {

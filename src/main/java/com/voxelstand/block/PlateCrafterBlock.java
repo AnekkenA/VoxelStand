@@ -70,7 +70,8 @@ public class PlateCrafterBlock extends BaseEntityBlock {
         this(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.WOOD)
                 .strength(2.5F)
-                .sound(SoundType.WOOD));
+                .sound(SoundType.WOOD)
+                .noOcclusion());
     }
 
     @Override

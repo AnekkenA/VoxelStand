@@ -20,6 +20,16 @@ import java.util.Map;
 public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlockEntity> {
     public SculptStandRenderer(BlockEntityRendererProvider.Context context) {}
 
+    public static float getBlockstateYRot(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 0.0f;
+            case EAST -> 90.0f;
+            case SOUTH -> 180.0f;
+            case WEST -> 270.0f;
+            default -> 0.0f;
+        };
+    }
+
     @Override
     public void render(SculptStandBlockEntity stand, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
@@ -27,9 +37,9 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
                 stand.getBlockState().getValue(SculptStandBlock.FACING) : Direction.NORTH;
 
         poseStack.pushPose();
-        // Вращение относительно центра опорного блока (0.5, 0, 0.5)
+        // Вращение строго синхронно с blockstate-моделью Minecraft вокруг центра мастер-блока
         poseStack.translate(0.5, 0.0, 0.5);
-        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-facing.toYRot()));
+        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-getBlockstateYRot(facing)));
         poseStack.translate(-0.5, 0.0, -0.5);
 
         // Центрирование воксельной сетки над 2-блочной столешницей (X:1.0, Y:0.95, Z:0.5)
@@ -66,7 +76,7 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
 
             if (mode == SculptStandBlockEntity.StandMode.WEAPON) {
                 // Оружие лежит горизонтально поперек двух опор стола
-                poseStack.translate(0.0, 0.16, 0.0);
+                poseStack.translate(0.0, 0.1125, 0.0);
                 poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90.0f));
                 poseStack.translate(0.0, -0.5, 0.0);
 
@@ -128,7 +138,7 @@ public class SculptStandRenderer implements BlockEntityRenderer<SculptStandBlock
             poseStack.pushPose();
 
             if (mode == SculptStandBlockEntity.StandMode.WEAPON) {
-                poseStack.translate(0.0, 0.16, 0.0);
+                poseStack.translate(0.0, 0.1125, 0.0);
                 poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90.0f));
                 poseStack.translate(0.0, -0.5, 0.0);
             }
